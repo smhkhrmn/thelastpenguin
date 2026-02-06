@@ -281,7 +281,7 @@ export default function LighthousePage() {
 
   const handleDragEnd = (event: any, info: PanInfo) => { if (info.offset.x < -100) nextSignal(); else if (info.offset.x > 100) prevSignal(); };
   
-  // DÜZELTİLMİŞ KART STİLİ (Üst üste binme sorunu çözüldü)
+  // DÜZELTİLMİŞ KART STİLİ (Mobil Uyumlu)
   const getCardStyle = (index: number) => {
     const total = filteredSignals.length;
     let dist = (index - currentIndex + total) % total;
@@ -290,10 +290,10 @@ export default function LighthousePage() {
     // Aktif Kart (Ortada, tam görünür)
     if (dist === 0) return { zIndex: 30, x: 0, scale: 1, opacity: 1, filter: "blur(0px)", display: "block" };
     
-    // Sağdaki Kart (İyice sağa, flu)
+    // Sağdaki Kart (Mobilde daha az mesafe)
     if (dist === 1) return { zIndex: 20, x: 350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
     
-    // Soldaki Kart (İyice sola, flu)
+    // Soldaki Kart (Mobilde daha az mesafe)
     if (dist === -1) return { zIndex: 20, x: -350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
     
     // Diğerleri gizli
@@ -305,11 +305,11 @@ export default function LighthousePage() {
       <LavaBackground />
       {showSetup && user && ( <ProfileSetup userId={user.id} onComplete={() => { setShowSetup(false); fetchProfile(user.id); }} /> )}
 
-      <div className="fixed top-24 right-8 z-[100] flex flex-col gap-3 pointer-events-none">
+      <div className="fixed top-24 right-8 z-[100] flex flex-col gap-3 pointer-events-none w-64 md:w-auto">
         <AnimatePresence>
           {notifications.map((notif) => (
-            <motion.div key={notif.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+            <motion.div key={notif.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 px-4 py-2 md:px-6 md:py-3 rounded-2xl shadow-xl flex items-center gap-3">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse shrink-0" />
               <span className="text-xs font-bold text-blue-100">{notif.message}</span>
             </motion.div>
           ))}
@@ -317,7 +317,7 @@ export default function LighthousePage() {
       </div>
 
       {/* 1. BLOK: HEADER & KATEGORİ MENÜSÜ */}
-      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-3 md:gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
             <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
                 <h1 className="text-lg md:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
@@ -349,7 +349,7 @@ export default function LighthousePage() {
         </div>
       </header>
 
-      {/* KATEGORİ MENÜSÜ (GÜNCELLENDİ) */}
+      {/* KATEGORİ MENÜSÜ */}
       <div className="fixed top-20 md:top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
         <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1">
           {FREQUENCIES.map((freq) => (
@@ -368,9 +368,10 @@ export default function LighthousePage() {
           ))}
         </div>
       </div>
-      <main className={`relative z-10 w-full h-full pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+      
+      <main className={`relative z-10 w-full h-full pt-32 md:pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
         <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
-            <div className="flex md:hidden w-full justify-end mb-4">
+            <div className="flex md:hidden w-full justify-end mb-2">
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
                     <button onClick={() => setViewMode('stack')} className={`p-2 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-4 h-4" /></button>
                     <button onClick={() => setViewMode('log')} className={`p-2 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-4 h-4" /></button>
@@ -378,18 +379,18 @@ export default function LighthousePage() {
             </div>
 
             {!isLoading && dailyQuestion && (
-                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-3 px-5 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
+                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-3 px-4 md:px-5 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
                     <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
                         <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20"><Sparkles className="w-4 h-4 text-blue-400" /></div>
                         <div className="overflow-hidden"><div className="text-[9px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none mb-1">Daily Frequency</div><div className="text-xs md:text-sm font-serif italic text-zinc-200 truncate">"{dailyQuestion.content}"</div></div>
                     </div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap bg-white/5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors pointer-events-none">Open Log</div>
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap bg-white/5 px-2 py-1 md:px-3 md:py-1.5 rounded-full hover:bg-white/10 transition-colors pointer-events-none hidden xs:block">Open Log</div>
                 </motion.button>
             )}
 
-            {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
+            {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse mt-20"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
                 viewMode === 'stack' ? (
-                    <div className="relative w-full max-w-2xl h-[55vh] md:h-[550px] flex items-center justify-center perspective-1000 mt-4">
+                    <div className="relative w-full max-w-2xl h-[55vh] md:h-[550px] flex items-center justify-center perspective-1000 mt-4 overflow-hidden md:overflow-visible">
                         {filteredSignals.map((signal, index) => (
                            <SignalCard 
                               key={signal.id}
@@ -411,8 +412,8 @@ export default function LighthousePage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-[75vh] md:h-[65vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar">
-                        <div className="grid gap-3 pb-20"> 
+                    <div className="w-full h-[65vh] md:h-[65vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar">
+                        <div className="grid gap-3 pb-24"> 
                             {filteredSignals.map((signal, index) => (
                                 <motion.div key={signal.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-start gap-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.07] transition-all group cursor-pointer`} onClick={() => { setCurrentIndex(index); setIsExpanded(true); }}>
                                     <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 mt-1"><img src={signal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${signal.author}`} className="w-full h-full object-cover" /></div>
@@ -432,7 +433,7 @@ export default function LighthousePage() {
                         </div>
                     </div>
                 )
-            ) : <div className="text-center opacity-50"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
+            ) : <div className="text-center opacity-50 mt-20"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
         </div>
 
         <div className="hidden lg:flex flex-col w-72 h-[calc(100vh-8rem)] fixed right-8 top-32 z-40">
@@ -487,7 +488,7 @@ export default function LighthousePage() {
       </main>
 
       {viewMode === 'log' && (
-        <button onClick={() => setIsWriting(true)} className="fixed bottom-10 right-8 lg:right-auto lg:left-1/2 lg:-translate-x-1/2 z-50 w-14 h-14 md:w-16 md:h-16 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all">
+        <button onClick={() => setIsWriting(true)} className="fixed bottom-10 right-4 lg:right-auto lg:left-1/2 lg:-translate-x-1/2 z-50 w-14 h-14 md:w-16 md:h-16 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all">
             <Podcast className="w-6 h-6 md:w-8 md:h-8 animate-pulse" />
         </button>
       )}
@@ -507,12 +508,12 @@ export default function LighthousePage() {
         {/* MISSION EKLEME MODALI */}
         {isMissionModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
-                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10 shrink-0">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
                         <p className="text-xs text-zinc-400 mt-1">Recruit fellow travelers for your project.</p>
                     </div>
-                    <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+                    <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
                         <div><label className="text-xs text-zinc-500 uppercase font-bold">Title</label><input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
                         <div className="flex gap-4">
                             <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><div className="flex flex-col gap-2"><button onClick={() => setNewMission({...newMission, type: 'partner'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'partner' ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Co-Founder</button><button onClick={() => setNewMission({...newMission, type: 'paid'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'paid' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Paid Gig</button></div></div>
@@ -521,7 +522,7 @@ export default function LighthousePage() {
                         <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none h-24 resize-none focus:border-emerald-500/50" /></div>
                         <div><label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Contact Methods</label><div className="space-y-2"><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-emerald-500/50 transition-colors"><AtSign className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Email (Required)" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-blue-500/50 transition-colors"><Video className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_skype} onChange={e => setNewMission({...newMission, contact_skype: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Skype ID" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-pink-500/50 transition-colors"><Instagram className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_insta} onChange={e => setNewMission({...newMission, contact_insta: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram User" /></div></div></div>
                     </div>
-                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5 text-yellow-600" /> Post Mission (Free)</>}</button></div>
+                    <div className="p-6 border-t border-white/10 bg-black/40 shrink-0"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5 text-yellow-600" /> Post Mission (Free)</>}</button></div>
                 </motion.div>
             </motion.div>
         )}
@@ -530,7 +531,7 @@ export default function LighthousePage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setIsMissionListOpen(false)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-sm h-[70vh] bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => setIsMissionListOpen(false)} className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/20"><X className="w-5 h-5 text-white" /></button>
-                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10 shrink-0">
                         <h2 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Mission Board</h2>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
@@ -549,7 +550,7 @@ export default function LighthousePage() {
                             </div>
                         )) : <div className="text-center text-zinc-500 text-xs mt-10">No missions active.</div>}
                     </div>
-                    <div className="p-4 border-t border-white/10">
+                    <div className="p-4 border-t border-white/10 shrink-0">
                         <button onClick={() => { setIsMissionListOpen(false); setIsMissionModalOpen(true); }} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Post a Mission</button>
                     </div>
                 </motion.div>
@@ -598,7 +599,7 @@ export default function LighthousePage() {
         {expandedBrief && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" onClick={() => setExpandedBrief(null)}>
                 <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full max-w-3xl bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center shrink-0">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Full Mission Brief</h3>
                         <button onClick={() => setExpandedBrief(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10"><X className="w-5 h-5 text-white" /></button>
                     </div>
@@ -799,92 +800,6 @@ export default function LighthousePage() {
 
             </motion.div>
         )}
-        {/* MISSION EKLEME MODALI */}
-{isMissionModalOpen && (
-    <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
-        onClick={() => setIsMissionModalOpen(false)}
-    >
-        <motion.div 
-            initial={{ scale: 0.9, y: 50 }} 
-            animate={{ scale: 1, y: 0 }} 
-            className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" 
-            onClick={(e) => e.stopPropagation()}
-        >
-            <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission
-                </h2>
-                <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full">
-                    <X className="w-5 h-5 text-white" />
-                </button>
-            </div>
-            
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Title</label>
-                    <input 
-                        value={newMission.title} 
-                        onChange={e => setNewMission({...newMission, title: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" 
-                        placeholder="Project title..."
-                    />
-                </div>
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Type</label>
-                        <select 
-                            value={newMission.type} 
-                            onChange={e => setNewMission({...newMission, type: e.target.value as any})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"
-                        >
-                            <option value="partner" className="bg-black">Co-Founder</option>
-                            <option value="paid" className="bg-black">Paid Gig</option>
-                        </select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Budget</label>
-                        <input 
-                            value={newMission.budget} 
-                            onChange={e => setNewMission({...newMission, budget: e.target.value})} 
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
-                            placeholder="e.g. $500 or %10"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Mission Details</label>
-                    <textarea 
-                        value={newMission.description} 
-                        onChange={e => setNewMission({...newMission, description: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Contact Email</label>
-                    <input 
-                        value={newMission.contact_email} 
-                        onChange={e => setNewMission({...newMission, contact_email: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
-                    />
-                </div>
-            </div>
-
-            <div className="p-6 border-t border-white/10 bg-black/40">
-                <button 
-                    onClick={handleCreateMission} 
-                    disabled={isPostingMission || !newMission.title || !newMission.contact_email}
-                    className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                >
-                    {isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}
-                </button>
-            </div>
-        </motion.div>
-    </motion.div>
-)}
       </AnimatePresence>
     </div>
   );
