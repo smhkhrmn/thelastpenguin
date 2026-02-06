@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // TypeScript hatalarını görmezden gel (Build sırasında)
+    // TypeScript hatalarını görmezden gel
     ignoreBuildErrors: true,
   },
-  // Hostinger veya dış kaynaklı resimler için
   images: {
-    unoptimized: true, 
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
