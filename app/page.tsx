@@ -15,12 +15,10 @@ import {
 import LavaBackground from '@/components/LavaBackground';
 import ProfileSetup from '@/components/ProfileSetup';
 
-// --- AYRILMIŞ BİLEŞENLER VE TİPLER ---
 import { SignalData, MissionData, FREQUENCIES } from "@/types";
 import SignalCard from "@/components/lighthouse/SignalCard";
 import WriteModal from "@/components/modals/WriteModal";
 
-// --- YARDIMCI FONKSİYONLAR ---
 const translateText = async (text: string) => {
     if (!text || text.length > 500) return text;
     try {
@@ -39,7 +37,6 @@ export default function LighthousePage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // --- STATE ---
   const [signals, setSignals] = useState<SignalData[]>([]);
   const [dailyQuestion, setDailyQuestion] = useState<any>(null);
   const [dailyResponses, setDailyResponses] = useState<SignalData[]>([]);
@@ -80,7 +77,6 @@ export default function LighthousePage() {
   });
   const [isPostingMission, setIsPostingMission] = useState(false);
 
-  // --- EFFECTLER ---
   useEffect(() => {
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -129,7 +125,6 @@ export default function LighthousePage() {
     return () => { supabase.removeChannel(channel); };
   }, [profile, isDailyOpen, dailyQuestion]);
 
-  // --- FONKSİYONLAR ---
   const addNotification = (message: string) => {
       const newNotif = { id: Date.now(), message };
       setNotifications(prev => [newNotif, ...prev]);
@@ -307,12 +302,12 @@ export default function LighthousePage() {
         </AnimatePresence>
       </div>
 
-      {/* HEADER & KATEGORİ MENÜSÜ (Laptop Uyumlu) */}
+      {/* HEADER - Laptop Uyumu (p-6 -> p-4 lg:p-8) */}
       <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
             <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
                 <h1 className="text-lg md:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
-                <span className="text-[7px] md:text-[9px] uppercase tracking-[0.2em] text-zinc-500 mt-0.5">Frequency Scanner v1.0</span>
+                <span className="text-[7px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-500 mt-0.5">Frequency Scanner v1.0</span>
             </div>
             <div className="flex md:hidden items-center gap-2">
                  <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 bg-white/10 border-white/10'}`}><Globe className="w-4 h-4" /></button>
@@ -360,33 +355,35 @@ export default function LighthousePage() {
         </div>
       </div>
 
-      <main className={`relative z-10 w-full h-full pt-40 lg:pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+      {/* ANA İÇERİK - Responsive Düzenlemeler Yapıldı (pt-32, h-400px vb.) */}
+      <main className={`relative z-10 w-full h-full pt-32 lg:pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
         <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
             {!isLoading && dailyQuestion && (
-                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-3 px-5 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
+                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-2.5 px-4 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
                     <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20"><Sparkles className="w-4 h-4 text-blue-400" /></div>
-                        <div className="overflow-hidden"><div className="text-[9px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none mb-1">Daily Frequency</div><div className="text-xs md:text-sm font-serif italic text-zinc-200 truncate">"{dailyQuestion.content}"</div></div>
+                        <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20"><Sparkles className="w-3.5 h-3.5 text-blue-400" /></div>
+                        <div className="overflow-hidden"><div className="text-[8px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-0.5">Daily Frequency</div><div className="text-[11px] md:text-sm font-serif italic text-zinc-200 truncate">"{dailyQuestion.content}"</div></div>
                     </div>
-                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap bg-white/5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors pointer-events-none">Open Log</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap bg-white/5 px-2.5 py-1.5 rounded-full hover:bg-white/10 transition-colors pointer-events-none">Open Log</div>
                 </motion.button>
             )}
 
             {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
                 viewMode === 'stack' ? (
-                    <div className="relative w-full max-w-2xl h-[55vh] md:h-[550px] flex items-center justify-center perspective-1000 mt-4">
+                    <div className="relative w-full max-w-2xl h-[400px] md:h-[450px] lg:h-[550px] flex items-center justify-center perspective-1000 mt-2">
                         {filteredSignals.map((signal, index) => (
                            <SignalCard key={signal.id} signal={signal} style={getCardStyle(index)} user={user} onDragEnd={handleDragEnd} onExpand={() => { if(index === currentIndex) setIsExpanded(true); }} onLike={handleSendSignal} onTranslate={handleTranslate} isTranslated={translatedIDs[signal.id]} isGlobalEnglish={isGlobalEnglish} />
                         ))}
-                        <div className="absolute bottom-0 flex items-center gap-6 md:gap-12 z-30 translate-y-1/2">
-                            <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/20 border border-white/5 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
+                        {/* BUTONLAR YUKARI TAŞINDI (bottom-4) VE TRANSLATE KALDIRILDI */}
+                        <div className="absolute bottom-4 flex items-center gap-6 md:gap-12 z-30">
+                            <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/40 border border-white/10 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
                             <button onClick={() => setIsWriting(true)} className="group relative"><div className="absolute inset-0 bg-white blur-xl opacity-20 rounded-full group-hover:opacity-40 transition-opacity" /><div className="relative w-16 h-16 md:w-24 md:h-24 bg-white text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"><Podcast className="w-8 h-8 md:w-10 md:h-10 animate-pulse" /></div></button>
-                            <button onClick={nextSignal} className="p-3 md:p-4 rounded-full bg-black/20 border border-white/5 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronRight className="w-6 h-6 md:w-8 md:h-8" /></button>
+                            <button onClick={nextSignal} className="p-3 md:p-4 rounded-full bg-black/40 border border-white/10 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronRight className="w-6 h-6 md:w-8 md:h-8" /></button>
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-[75vh] md:h-[65vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar">
-                        <div className="grid gap-3 pb-20"> 
+                    <div className="w-full h-[70vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar pb-20">
+                        <div className="grid gap-3"> 
                             {filteredSignals.map((signal, index) => (
                                 <motion.div key={signal.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-start gap-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.07] transition-all group cursor-pointer`} onClick={() => { setCurrentIndex(index); setIsExpanded(true); }}>
                                     <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 mt-1"><img src={signal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${signal.author}`} className="w-full h-full object-cover" /></div>
@@ -411,12 +408,12 @@ export default function LighthousePage() {
                 <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest"><Briefcase className="w-3 h-3 text-emerald-400" /> Mission Board</div>
                     <div className="flex gap-1.5 items-center">
-                        <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
-                        <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
-                        {/* ARTI BUTONU DÜZELTİLDİ: z-index artırıldı */}
+                        <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded-md transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
+                        <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded-md transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
+                        {/* ARTI BUTONU DÜZELTİLDİ: z-index ve scale */}
                         <button 
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
-                          className="relative z-[60] p-1 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg ml-1"
+                          className="relative z-[60] p-1.5 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg ml-2"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -426,7 +423,8 @@ export default function LighthousePage() {
                     {missions.length > 0 ? missions.map((mission) => (
                         <div key={mission.id} className={`bg-white/[0.03] border border-white/10 p-3 rounded-xl hover:border-white/30 transition-all cursor-pointer group`} onClick={() => setSelectedMission(mission)}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                                <span className="text-[8px] text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
                             </div>
                             <h4 className="text-[11px] font-bold text-white leading-tight mb-1 truncate">{mission.title}</h4>
                             <p className="text-[9px] text-zinc-500 line-clamp-2 leading-snug">{mission.description}</p>
@@ -435,7 +433,7 @@ export default function LighthousePage() {
                                 <ChevronRight className="w-2.5 h-2.5 text-zinc-600 group-hover:text-white transition-colors" />
                             </div>
                         </div>
-                    )) : <div className="text-center text-zinc-700 text-[9px] mt-10 italic">No missions active.</div>}
+                    )) : <div className="text-center text-zinc-500 text-[10px] mt-10 italic">No missions active.<br/>Be the first to hire.</div>}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none" />
             </div>
@@ -451,7 +449,7 @@ export default function LighthousePage() {
       <AnimatePresence>
         <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
         
-        {/* MISSION EKLEME MODALI - En Alta Eklendi */}
+        {/* MISSION EKLEME MODALI */}
         {isMissionModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -493,6 +491,9 @@ export default function LighthousePage() {
                             </div>
                         )) : <div className="text-center text-zinc-500 text-xs mt-10">No missions active.</div>}
                     </div>
+                    <div className="p-4 border-t border-white/10">
+                        <button onClick={() => { setIsMissionListOpen(false); setIsMissionModalOpen(true); }} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Post a Mission</button>
+                    </div>
                 </motion.div>
             </motion.div>
         )}
@@ -515,11 +516,11 @@ export default function LighthousePage() {
                         </div>
                         <div className="flex gap-4">
                             <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
-                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1"><DollarSign className="w-3 h-3 inline mr-1" /> Budget</div>
-                                <div className="text-sm font-mono text-white truncate">{selectedMission.budget}</div>
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Budget</div>
+                                <div className="text-sm font-mono text-white">{selectedMission.budget}</div>
                             </div>
                             <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
-                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1"><Calendar className="w-3 h-3 inline mr-1" /> Posted</div>
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Posted</div>
                                 <div className="text-sm font-mono text-white">{new Date(selectedMission.created_at).toLocaleDateString()}</div>
                             </div>
                         </div>
@@ -600,12 +601,13 @@ export default function LighthousePage() {
                                     </div>
                                 ))}
                                 {!showAllComments && currentSignal.comments && currentSignal.comments.length > 2 && (
-                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 mt-2 pl-12"><span>Expand logs</span><ChevronDown className="w-3 h-3" /></button>
+                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2 pl-12"><span>Expand logs</span><ChevronDown className="w-3 h-3" /></button>
                                 )}
                             </div>
                         </div>
                     </div>
                     <div className="p-4 md:p-6 bg-black/40 border-t border-white/5 shrink-0">
+                        {replyingTo && ( <div className="flex items-center justify-between mb-2 px-12 text-xs text-blue-400"><span>Replying to <span className="font-bold">@{replyingTo}</span></span><button onClick={() => setReplyingTo(null)} className="hover:text-white"><X className="w-3 h-3" /></button></div> )}
                         <div className="flex gap-3 items-center">
                             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" /></div>
                             <div className="flex-1 relative">
@@ -615,7 +617,7 @@ export default function LighthousePage() {
                         </div>
                     </div>
                 </motion.div>
-                <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 active:scale-90"><ChevronRight className="w-8 h-8" /></button>
+                <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"><ChevronRight className="w-8 h-8" /></button>
                 <div className="md:hidden fixed bottom-10 left-0 right-0 flex justify-between px-10 z-[120] pointer-events-none">
                     <button onClick={(e) => { e.stopPropagation(); prevSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronLeft className="w-6 h-6" /></button>
                     <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronRight className="w-6 h-6" /></button>
