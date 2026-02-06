@@ -346,8 +346,30 @@ export default function LighthousePage() {
             ) : ( <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })} className="flex items-center gap-2 bg-white text-black px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase hover:scale-105 transition-transform"><LogIn className="w-4 h-4" /> <span>Login</span></button> )}
         </div>
       </header>
-
-      <main className={`relative z-10 w-full h-full pt-32 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+{/* KATEGORİ MENÜSÜ */}
+<div className="fixed top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
+  <div className="flex bg-black/40 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl gap-1">
+    {FREQUENCIES.map((freq) => (
+      <button
+        key={freq.id}
+        onClick={() => setFilterFreq(freq.id)}
+        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          filterFreq === freq.id 
+          ? 'bg-white text-black shadow-lg' 
+          : 'text-zinc-500 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          {freq.id !== 'all' && (
+            <div className={`w-1.5 h-1.5 rounded-full ${freq.color}`} />
+          )}
+          {freq.name}
+        </div>
+      </button>
+    ))}
+  </div>
+</div>
+      <main className={`relative z-10 w-full h-full pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
         <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
             <div className="flex md:hidden w-full justify-end mb-4">
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
