@@ -24,13 +24,8 @@ const translateText = async (text: string) => {
     try {
         const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=Autodetect|en`);
         const data = await response.json();
-        if (data.responseStatus !== 200 || data.responseData.translatedText.includes("SELECT TWO DISTINCT LANGUAGES")) {
-            return text;
-        }
-        return data.responseData.translatedText;
-    } catch (error) {
-        return text;
-    }
+        return (data.responseStatus !== 200 || data.responseData.translatedText.includes("SELECT TWO DISTINCT LANGUAGES")) ? text : data.responseData.translatedText;
+    } catch (error) { return text; }
 };
 
 export default function LighthousePage() {
@@ -302,8 +297,7 @@ export default function LighthousePage() {
         </AnimatePresence>
       </div>
 
-      {/* HEADER - Laptop Uyumu (p-6 -> p-4 lg:p-8) */}
-      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
             <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
                 <h1 className="text-lg md:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
@@ -335,14 +329,14 @@ export default function LighthousePage() {
         </div>
       </header>
 
-      {/* KATEGORİ MENÜSÜ */}
+      {/* MENÜ: Laptopta Top-20, Mobilde Top-20 */}
       <div className="fixed top-20 md:top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
         <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1">
           {FREQUENCIES.map((freq) => (
             <button
               key={freq.id}
               onClick={() => setFilterFreq(freq.id)}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${
                 filterFreq === freq.id ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -355,8 +349,8 @@ export default function LighthousePage() {
         </div>
       </div>
 
-      {/* ANA İÇERİK - Responsive Düzenlemeler Yapıldı (pt-32, h-400px vb.) */}
-      <main className={`relative z-10 w-full h-full pt-32 lg:pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+      {/* ANA İÇERİK - PT-32 YAPILDI (Eskisi 44) - Kart Yüksekliği h-[40vh] yapıldı */}
+      <main className={`relative z-10 w-full h-full pt-32 lg:pt-40 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
         <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
             {!isLoading && dailyQuestion && (
                 <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-2.5 px-4 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
@@ -370,19 +364,19 @@ export default function LighthousePage() {
 
             {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
                 viewMode === 'stack' ? (
-                    <div className="relative w-full max-w-2xl h-[400px] md:h-[450px] lg:h-[550px] flex items-center justify-center perspective-1000 mt-2">
+                    <div className="relative w-full max-w-2xl h-[40vh] md:h-[450px] lg:h-[550px] flex items-center justify-center perspective-1000 mt-2">
                         {filteredSignals.map((signal, index) => (
                            <SignalCard key={signal.id} signal={signal} style={getCardStyle(index)} user={user} onDragEnd={handleDragEnd} onExpand={() => { if(index === currentIndex) setIsExpanded(true); }} onLike={handleSendSignal} onTranslate={handleTranslate} isTranslated={translatedIDs[signal.id]} isGlobalEnglish={isGlobalEnglish} />
                         ))}
-                        {/* BUTONLAR YUKARI TAŞINDI (bottom-4) VE TRANSLATE KALDIRILDI */}
+                        {/* BUTONLAR YUKARI ALINDI (bottom-4) */}
                         <div className="absolute bottom-4 flex items-center gap-6 md:gap-12 z-30">
                             <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/40 border border-white/10 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
-                            <button onClick={() => setIsWriting(true)} className="group relative"><div className="absolute inset-0 bg-white blur-xl opacity-20 rounded-full group-hover:opacity-40 transition-opacity" /><div className="relative w-16 h-16 md:w-24 md:h-24 bg-white text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"><Podcast className="w-8 h-8 md:w-10 md:h-10 animate-pulse" /></div></button>
+                            <button onClick={() => setIsWriting(true)} className="group relative"><div className="absolute inset-0 bg-white blur-xl opacity-20 rounded-full group-hover:opacity-40 transition-opacity" /><div className="relative w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-white text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"><Podcast className="w-6 h-6 md:w-8 md:h-8 animate-pulse" /></div></button>
                             <button onClick={nextSignal} className="p-3 md:p-4 rounded-full bg-black/40 border border-white/10 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronRight className="w-6 h-6 md:w-8 md:h-8" /></button>
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-[70vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar pb-20">
+                    <div className="w-full h-[65vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar pb-20">
                         <div className="grid gap-3"> 
                             {filteredSignals.map((signal, index) => (
                                 <motion.div key={signal.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-start gap-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.07] transition-all group cursor-pointer`} onClick={() => { setCurrentIndex(index); setIsExpanded(true); }}>
@@ -402,7 +396,6 @@ export default function LighthousePage() {
             ) : <div className="text-center opacity-50"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
         </div>
 
-        {/* MISSION BOARD - Responsive Düzenleme (w-72 -> w-64 Laptop için) */}
         <div className="hidden lg:flex flex-col w-64 xl:w-72 h-[calc(100vh-10rem)] fixed right-4 xl:right-8 top-32 z-40">
             <div className="w-full h-full bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl p-4 flex flex-col overflow-hidden relative">
                 <div className="flex justify-between items-center mb-3">
@@ -410,7 +403,7 @@ export default function LighthousePage() {
                     <div className="flex gap-1.5 items-center">
                         <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded-md transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
                         <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded-md transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
-                        {/* ARTI BUTONU DÜZELTİLDİ: z-index ve scale */}
+                        {/* ARTI BUTONU: z-index 60 */}
                         <button 
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
                           className="relative z-[60] p-1.5 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg ml-2"
@@ -433,7 +426,7 @@ export default function LighthousePage() {
                                 <ChevronRight className="w-2.5 h-2.5 text-zinc-600 group-hover:text-white transition-colors" />
                             </div>
                         </div>
-                    )) : <div className="text-center text-zinc-500 text-[10px] mt-10 italic">No missions active.<br/>Be the first to hire.</div>}
+                    )) : <div className="text-center text-zinc-700 text-[10px] mt-10 italic">No missions active.<br/>Be the first to hire.</div>}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none" />
             </div>
@@ -449,24 +442,42 @@ export default function LighthousePage() {
       <AnimatePresence>
         <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
         
-        {/* MISSION EKLEME MODALI */}
+        {/* MISSION EKLEME MODALI - KOMPAKT TASARIM */}
         {isMissionModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
-                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.15)]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-5 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
                         <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-5 h-5 text-white" /></button>
                     </div>
+                    {/* FORM GÖVDESİ - GRID YAPISI İLE KÜÇÜLTÜLDÜ */}
                     <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Title</label><input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
-                        <div className="flex gap-4">
-                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><select value={newMission.type} onChange={e => setNewMission({...newMission, type: e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"><option value="partner" className="bg-black">Co-Founder</option><option value="paid" className="bg-black">Paid Gig</option></select></div>
-                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Budget</label><input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="col-span-2">
+                                <label className="text-[10px] text-zinc-500 uppercase font-bold pl-1">Project Title</label>
+                                <input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50 text-sm" placeholder="e.g. AI Assistant for Mars" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-zinc-500 uppercase font-bold pl-1">Type</label>
+                                <select value={newMission.type} onChange={e => setNewMission({...newMission, type: e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none text-sm appearance-none"><option value="partner" className="bg-black">Partner</option><option value="paid" className="bg-black">Paid Gig</option></select>
+                            </div>
                         </div>
-                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none focus:border-emerald-500/50" /></div>
-                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Contact Email</label><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] text-zinc-500 uppercase font-bold pl-1">Budget / Equity</label>
+                                <input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50 text-sm" placeholder="$500 or %10" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-zinc-500 uppercase font-bold pl-1">Contact Email</label>
+                                <input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50 text-sm" placeholder="hello@example.com" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-zinc-500 uppercase font-bold pl-1">Mission Brief</label>
+                            <textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none focus:border-emerald-500/50 text-sm" placeholder="Describe the objectives..." />
+                        </div>
                     </div>
-                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}</button></div>
+                    <div className="p-5 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50 transition-colors">{isPostingMission ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Publish Mission (Free)"}</button></div>
                 </motion.div>
             </motion.div>
         )}
@@ -552,7 +563,7 @@ export default function LighthousePage() {
                                         <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden"><img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-full h-full" /></div>
                                         <div className="text-xs font-bold text-white">@{response.author}</div>
                                     </div>
-                                    <p className="text-zinc-200 text-sm md:text-base leading-relaxed">"{response.content}"</p>
+                                    <p className="text-zinc-200 text-sm md:text-base leading-relaxed">"{renderText(response)}"</p>
                                 </div>
                             )) : <div className="text-center py-10 opacity-30 text-xs uppercase tracking-widest">No transmissions yet...</div>}
                         </div>
@@ -607,7 +618,6 @@ export default function LighthousePage() {
                         </div>
                     </div>
                     <div className="p-4 md:p-6 bg-black/40 border-t border-white/5 shrink-0">
-                        {replyingTo && ( <div className="flex items-center justify-between mb-2 px-12 text-xs text-blue-400"><span>Replying to <span className="font-bold">@{replyingTo}</span></span><button onClick={() => setReplyingTo(null)} className="hover:text-white"><X className="w-3 h-3" /></button></div> )}
                         <div className="flex gap-3 items-center">
                             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" /></div>
                             <div className="flex-1 relative">
@@ -617,7 +627,7 @@ export default function LighthousePage() {
                         </div>
                     </div>
                 </motion.div>
-                <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"><ChevronRight className="w-8 h-8" /></button>
+                <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 active:scale-90"><ChevronRight className="w-8 h-8" /></button>
                 <div className="md:hidden fixed bottom-10 left-0 right-0 flex justify-between px-10 z-[120] pointer-events-none">
                     <button onClick={(e) => { e.stopPropagation(); prevSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronLeft className="w-6 h-6" /></button>
                     <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronRight className="w-6 h-6" /></button>
