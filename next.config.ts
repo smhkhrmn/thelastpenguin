@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
+    // TypeScript hatalarını görmezden gel (Build sırasında)
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Hostinger veya dış kaynaklı resimler için
   images: {
     unoptimized: true, 
     remotePatterns: [
