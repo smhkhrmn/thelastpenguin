@@ -443,7 +443,12 @@ export default function LighthousePage() {
                     <div className="flex gap-1">
                         <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded-md transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
                         <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded-md transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
-                        <button onClick={() => setIsMissionModalOpen(true)} className="p-1 bg-white text-black rounded-full hover:scale-110 transition-transform ml-2"><Plus className="w-3 h-3" /></button>
+                        <button 
+  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
+  className="relative z-[60] p-1.5 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg"
+>
+  <Plus className="w-3.5 h-3.5" />
+</button>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
@@ -795,6 +800,92 @@ export default function LighthousePage() {
 
             </motion.div>
         )}
+        {/* MISSION EKLEME MODALI */}
+{isMissionModalOpen && (
+    <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
+        onClick={() => setIsMissionModalOpen(false)}
+    >
+        <motion.div 
+            initial={{ scale: 0.9, y: 50 }} 
+            animate={{ scale: 1, y: 0 }} 
+            className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" 
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission
+                </h2>
+                <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full">
+                    <X className="w-5 h-5 text-white" />
+                </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Title</label>
+                    <input 
+                        value={newMission.title} 
+                        onChange={e => setNewMission({...newMission, title: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" 
+                        placeholder="Project title..."
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <div className="flex-1">
+                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Type</label>
+                        <select 
+                            value={newMission.type} 
+                            onChange={e => setNewMission({...newMission, type: e.target.value as any})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"
+                        >
+                            <option value="partner" className="bg-black">Co-Founder</option>
+                            <option value="paid" className="bg-black">Paid Gig</option>
+                        </select>
+                    </div>
+                    <div className="flex-1">
+                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Budget</label>
+                        <input 
+                            value={newMission.budget} 
+                            onChange={e => setNewMission({...newMission, budget: e.target.value})} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
+                            placeholder="e.g. $500 or %10"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Mission Details</label>
+                    <textarea 
+                        value={newMission.description} 
+                        onChange={e => setNewMission({...newMission, description: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Contact Email</label>
+                    <input 
+                        value={newMission.contact_email} 
+                        onChange={e => setNewMission({...newMission, contact_email: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
+                    />
+                </div>
+            </div>
+
+            <div className="p-6 border-t border-white/10 bg-black/40">
+                <button 
+                    onClick={handleCreateMission} 
+                    disabled={isPostingMission || !newMission.title || !newMission.contact_email}
+                    className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                >
+                    {isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}
+                </button>
+            </div>
+        </motion.div>
+    </motion.div>
+)}
       </AnimatePresence>
     </div>
   );
