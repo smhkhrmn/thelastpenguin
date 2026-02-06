@@ -19,7 +19,6 @@ import { SignalData, MissionData, FREQUENCIES } from "@/types";
 import SignalCard from "@/components/lighthouse/SignalCard";
 import WriteModal from "@/components/modals/WriteModal";
 
-// --- ÇEVİRİ FONKSİYONU ---
 const translateText = async (text: string) => {
     if (!text || text.length > 500) return text;
     try {
@@ -33,7 +32,7 @@ export default function LighthousePage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // --- STATE YÖNETİMİ ---
+  // STATE
   const [signals, setSignals] = useState<SignalData[]>([]);
   const [dailyQuestion, setDailyQuestion] = useState<any>(null);
   const [dailyResponses, setDailyResponses] = useState<SignalData[]>([]);
@@ -42,7 +41,6 @@ export default function LighthousePage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [showSetup, setShowSetup] = useState(false);
-  
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'stack' | 'log'>('stack'); 
   const [missionViewMode, setMissionViewMode] = useState<'cards' | 'list'>('cards');
@@ -51,8 +49,6 @@ export default function LighthousePage() {
   const [filterFreq, setFilterFreq] = useState("all");
   const [isGlobalEnglish, setIsGlobalEnglish] = useState(false);
   const [translatedIDs, setTranslatedIDs] = useState<{[key: number]: boolean}>({});
-
-  // Modallar
   const [isDailyOpen, setIsDailyOpen] = useState(false);
   const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
   const [isMissionListOpen, setIsMissionListOpen] = useState(false);
@@ -60,8 +56,6 @@ export default function LighthousePage() {
   const [expandedBrief, setExpandedBrief] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isWriting, setIsWriting] = useState(false);
-
-  // Form Verileri
   const [selectedFreq, setSelectedFreq] = useState(FREQUENCIES[1]);
   const [messageText, setMessageText] = useState("");
   const [dailyResponseText, setDailyResponseText] = useState(""); 
@@ -70,13 +64,10 @@ export default function LighthousePage() {
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [newMission, setNewMission] = useState({ 
-      title: '', type: 'partner' as 'partner' | 'paid', description: '', budget: '', 
-      contact_email: '', contact_skype: '', contact_insta: '' 
-  });
+  const [newMission, setNewMission] = useState({ title: '', type: 'partner' as 'partner' | 'paid', description: '', budget: '', contact_email: '', contact_skype: '', contact_insta: '' });
   const [isPostingMission, setIsPostingMission] = useState(false);
 
-  // --- EFFECTLER (Veri Çekme & Realtime) ---
+  // EFFECTS
   useEffect(() => {
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -125,7 +116,7 @@ export default function LighthousePage() {
     return () => { supabase.removeChannel(channel); };
   }, [profile, isDailyOpen, dailyQuestion]);
 
-  // --- YARDIMCI FONKSİYONLAR ---
+  // FUNCTIONS
   const addNotification = (message: string) => {
       const newNotif = { id: Date.now(), message };
       setNotifications(prev => [newNotif, ...prev]);
@@ -142,14 +133,10 @@ export default function LighthousePage() {
     let query = supabase.from('signals').select('*, comments(*), likes(*)').order('created_at', { ascending: false });
     if (filterFreq !== 'all') query = query.eq('frequency', filterFreq);
     const { data, error } = await query;
-
     if (!error && data) {
         const enrichedData = await Promise.all(data.map(async (sig) => {
             const { data: p } = await supabase.from('profiles').select('avatar_url, country, occupation').eq('username', sig.author).maybeSingle();
-            return { 
-                ...sig, author_avatar: p?.avatar_url, author_country: p?.country || sig.distance, author_occupation: p?.occupation || sig.role,
-                comments: sig.comments ? sig.comments.sort((a:any, b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) : []
-            };
+            return { ...sig, author_avatar: p?.avatar_url, author_country: p?.country || sig.distance, author_occupation: p?.occupation || sig.role, comments: sig.comments ? sig.comments.sort((a:any, b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) : [] };
         }));
         setSignals(enrichedData);
     }
@@ -303,31 +290,26 @@ export default function LighthousePage() {
         </AnimatePresence>
       </div>
 
-      {/* HEADER: Z-50 ile üstte sabit */}
-      <header className={`absolute top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent pointer-events-none ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-        <div className="flex items-center gap-4 pointer-events-auto">
+      <header className={`absolute top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start pointer-events-auto">
             <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
                 <h1 className="text-base md:text-xl lg:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
                 <span className="text-[7px] md:text-[9px] uppercase tracking-[0.3em] text-zinc-500 mt-0.5">Frequency Scanner v1.0</span>
             </div>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4 pointer-events-auto">
-            <div className="hidden md:flex items-center gap-2">
-                <div className="flex bg-white/5 border border-white/10 p-0.5 rounded-xl">
-                    <button onClick={() => setViewMode('stack')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => setViewMode('log')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-                </div>
-                <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 gap-2">
-                    <Search className="w-3 h-3 text-zinc-500" />
-                    <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Scan..." className="bg-transparent border-none outline-none text-[11px] w-20 lg:w-32 text-white" />
-                </div>
-            </div>
-            
-            <div className="flex md:hidden gap-2">
+            <div className="flex md:hidden items-center gap-2">
                  <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 bg-white/10 border-white/10'}`}><Globe className="w-4 h-4" /></button>
                  <button onClick={() => setIsMissionListOpen(true)} className="p-2 rounded-full bg-white/10 border border-white/10 text-emerald-400"><Briefcase className="w-4 h-4" /></button>
             </div>
-
+        </div>
+        <div className="hidden md:flex items-center gap-3 lg:gap-4 pointer-events-auto">
+            <div className="flex bg-white/5 border border-white/10 p-0.5 rounded-xl">
+                <button onClick={() => setViewMode('stack')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setViewMode('log')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            </div>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-1.5 gap-2">
+                <Search className="w-3 h-3 text-zinc-500" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Scan..." className="bg-transparent border-none outline-none text-[11px] w-20 lg:w-32 text-white" />
+            </div>
             {user ? (
                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-md">
                     <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`hidden md:block p-1 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 border-white/10 hover:text-white'}`}><Globe className="w-3.5 h-3.5" /></button>
@@ -340,25 +322,14 @@ export default function LighthousePage() {
         </div>
       </header>
 
-      {/* MENÜ: Sabit, kaydırılabilir */}
-      <div className={`absolute top-20 md:top-24 left-0 right-0 z-40 flex justify-center px-4 transition-all duration-500 ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-        <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1 overflow-x-auto no-scrollbar max-w-full">
-          {FREQUENCIES.map((freq) => (
-            <button key={freq.id} onClick={() => setFilterFreq(freq.id)} className={`px-3 py-1.5 rounded-xl text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${filterFreq === freq.id ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}>
-              <div className="flex items-center gap-1.5">{freq.id !== 'all' && ( <div className={`w-1.5 h-1.5 rounded-full ${freq.color}`} /> )}{freq.name}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ANA İÇERİK: DİKEY VE YATAY MERKEZLEME (15" ve 27" uyumlu) */}
+      {/* ANA İÇERİK: Dikey Ortalama ve Yeni Sıralama (1. Daily, 2. Kategori, 3. Kartlar) */}
       <main className={`relative z-10 w-full h-full flex flex-col justify-center items-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
         
-        {/* KART GRUBU - Akıllı Ölçekleme (Laptopta %90, Dev ekranda %125) */}
-        <div className="w-full max-w-2xl px-4 flex flex-col items-center mt-12 md:mt-0 2xl:scale-125 transition-transform duration-500 origin-center">
-            {/* Günlük Soru Butonu */}
+        <div className="w-full max-w-2xl px-4 flex flex-col items-center mt-20 md:mt-24 2xl:mt-0 2xl:scale-110 transition-transform duration-500 origin-center">
+            
+            {/* 1. DAILY FREQUENCY: En Üstte */}
             {!isLoading && dailyQuestion && (
-                <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-md md:max-w-xl mb-4 flex items-center justify-between p-2.5 px-4 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
+                <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-md md:max-w-xl mb-6 flex items-center justify-between p-2.5 px-4 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
                     <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
                         <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20"><Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5 text-blue-400" /></div>
                         <div className="overflow-hidden"><div className="text-[8px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-0.5">Daily Frequency</div><div className="text-[10px] md:text-sm font-serif italic text-zinc-200 truncate">"{dailyQuestion.content}"</div></div>
@@ -367,13 +338,24 @@ export default function LighthousePage() {
                 </motion.button>
             )}
 
+            {/* 2. KATEGORİ MENÜSÜ: Daily'nin Altında */}
+            <div className="mb-6 flex justify-center w-full overflow-x-auto no-scrollbar pb-2">
+                <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1">
+                {FREQUENCIES.map((freq) => (
+                    <button key={freq.id} onClick={() => setFilterFreq(freq.id)} className={`px-3 py-1.5 rounded-xl text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${filterFreq === freq.id ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}>
+                    <div className="flex items-center gap-1.5">{freq.id !== 'all' && ( <div className={`w-1.5 h-1.5 rounded-full ${freq.color}`} /> )}{freq.name}</div>
+                    </button>
+                ))}
+                </div>
+            </div>
+
+            {/* 3. KARTLAR VE BUTONLAR: En Altta */}
             {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
                 viewMode === 'stack' ? (
-                    <div className="relative w-full max-w-md md:max-w-xl lg:max-w-2xl h-[350px] md:h-[450px] lg:h-[500px] flex items-center justify-center perspective-1000">
+                    <div className="relative w-full max-w-md md:max-w-xl lg:max-w-2xl h-[350px] md:h-[450px] flex items-center justify-center perspective-1000">
                         {filteredSignals.map((signal, index) => (
                            <SignalCard key={signal.id} signal={signal} style={getCardStyle(index)} user={user} onDragEnd={handleDragEnd} onExpand={() => { if(index === currentIndex) setIsExpanded(true); }} onLike={handleSendSignal} onTranslate={handleTranslate} isTranslated={translatedIDs[signal.id]} isGlobalEnglish={isGlobalEnglish} />
                         ))}
-                        {/* ALT NAVİGASYON (YUKARI ALINDI) */}
                         <div className="absolute -bottom-16 md:-bottom-20 flex items-center gap-8 md:gap-12 z-30">
                             <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/40 border border-white/10 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-5 h-5 md:w-6 md:h-6" /></button>
                             <button onClick={() => setIsWriting(true)} className="group relative"><div className="absolute inset-0 bg-white blur-xl opacity-20 rounded-full group-hover:opacity-40 transition-opacity" /><div className="relative w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-white text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"><Podcast className="w-6 h-6 md:w-8 md:h-8 animate-pulse" /></div></button>
@@ -381,7 +363,7 @@ export default function LighthousePage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-[60vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar pb-20">
+                    <div className="w-full h-[55vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar pb-20">
                         <div className="grid gap-3"> 
                             {filteredSignals.map((signal, index) => (
                                 <motion.div key={signal.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-start gap-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.07] transition-all group cursor-pointer`} onClick={() => { setCurrentIndex(index); setIsExpanded(true); }}>
@@ -401,7 +383,7 @@ export default function LighthousePage() {
             ) : <div className="text-center opacity-50"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
         </div>
 
-        {/* MISSION BOARD - SAĞDA ORTALANDI */}
+        {/* MISSION BOARD - Sağda Sabit */}
         <div className="hidden lg:flex flex-col w-64 xl:w-72 2xl:w-80 h-[60vh] 2xl:h-[70vh] fixed right-6 xl:right-10 top-1/2 -translate-y-1/2 z-40">
             <div className="w-full h-full bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl p-4 flex flex-col overflow-hidden relative shadow-2xl">
                 <div className="flex justify-between items-center mb-3">
@@ -442,7 +424,7 @@ export default function LighthousePage() {
       <AnimatePresence>
         <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
         
-        {/* MISSION EKLEME MODALI - KOMPAKT TASARIM */}
+        {/* MISSION EKLEME MODALI - KOMPAKT */}
         {isMissionModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.15)]" onClick={(e) => e.stopPropagation()}>
@@ -481,7 +463,7 @@ export default function LighthousePage() {
             </motion.div>
         )}
 
-        {/* MISSION LIST MODAL (Mobil) */}
+        {/* MISSION LIST MODAL */}
         {isMissionListOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setIsMissionListOpen(false)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-sm h-[70vh] bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
