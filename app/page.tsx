@@ -5,7 +5,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
-  Radio, Signal, X, MessageSquare, Send, 
+  Radio, X, MessageSquare, Send, 
   ChevronLeft, ChevronRight, RefreshCw, User, CornerDownRight, ChevronDown, 
   LogIn, LogOut, Search, LayoutGrid, Layers, Plus, Reply, Sparkles, Globe, 
   Briefcase, DollarSign, Calendar, Mail, Maximize2, AtSign, Video, Instagram, 
@@ -14,10 +14,13 @@ import {
 
 import LavaBackground from '@/components/LavaBackground';
 import ProfileSetup from '@/components/ProfileSetup';
+
+// --- AYRILMIŞ BİLEŞENLER VE TİPLER ---
 import { SignalData, MissionData, FREQUENCIES } from "@/types";
 import SignalCard from "@/components/lighthouse/SignalCard";
 import WriteModal from "@/components/modals/WriteModal";
 
+// --- YARDIMCI FONKSİYONLAR ---
 const translateText = async (text: string) => {
     if (!text || text.length > 500) return text;
     try {
@@ -36,6 +39,7 @@ export default function LighthousePage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // --- STATE ---
   const [signals, setSignals] = useState<SignalData[]>([]);
   const [dailyQuestion, setDailyQuestion] = useState<any>(null);
   const [dailyResponses, setDailyResponses] = useState<SignalData[]>([]);
@@ -76,6 +80,7 @@ export default function LighthousePage() {
   });
   const [isPostingMission, setIsPostingMission] = useState(false);
 
+  // --- EFFECTLER ---
   useEffect(() => {
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -124,6 +129,7 @@ export default function LighthousePage() {
     return () => { supabase.removeChannel(channel); };
   }, [profile, isDailyOpen, dailyQuestion]);
 
+  // --- FONKSİYONLAR ---
   const addNotification = (message: string) => {
       const newNotif = { id: Date.now(), message };
       setNotifications(prev => [newNotif, ...prev]);
@@ -275,7 +281,7 @@ export default function LighthousePage() {
 
   const handleDragEnd = (event: any, info: PanInfo) => { if (info.offset.x < -100) nextSignal(); else if (info.offset.x > 100) prevSignal(); };
   
-  // GÜNCELLEME: KART DİZİLİM MANTIĞI
+  // DÜZELTİLMİŞ KART STİLİ (Üst üste binme sorunu çözüldü)
   const getCardStyle = (index: number) => {
     const total = filteredSignals.length;
     let dist = (index - currentIndex + total) % total;
@@ -284,10 +290,10 @@ export default function LighthousePage() {
     // Aktif Kart (Ortada, tam görünür)
     if (dist === 0) return { zIndex: 30, x: 0, scale: 1, opacity: 1, filter: "blur(0px)", display: "block" };
     
-    // Sağdaki Kart (Sağa atılmış, flu)
+    // Sağdaki Kart (İyice sağa, flu)
     if (dist === 1) return { zIndex: 20, x: 350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
     
-    // Soldaki Kart (Sola atılmış, flu)
+    // Soldaki Kart (İyice sola, flu)
     if (dist === -1) return { zIndex: 20, x: -350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
     
     // Diğerleri gizli
@@ -471,6 +477,28 @@ export default function LighthousePage() {
            selectedFreq={selectedFreq}
            setSelectedFreq={setSelectedFreq}
         />
+        
+        {/* MISSION EKLEME MODALI */}
+        {isMissionModalOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
+                        <p className="text-xs text-zinc-400 mt-1">Recruit fellow travelers for your project.</p>
+                    </div>
+                    <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Title</label><input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        <div className="flex gap-4">
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><div className="flex flex-col gap-2"><button onClick={() => setNewMission({...newMission, type: 'partner'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'partner' ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Co-Founder</button><button onClick={() => setNewMission({...newMission, type: 'paid'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'paid' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Paid Gig</button></div></div>
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Budget/Equity</label><input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        </div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none h-24 resize-none focus:border-emerald-500/50" /></div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Contact Methods</label><div className="space-y-2"><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-emerald-500/50 transition-colors"><AtSign className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Email (Required)" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-blue-500/50 transition-colors"><Video className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_skype} onChange={e => setNewMission({...newMission, contact_skype: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Skype ID" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-pink-500/50 transition-colors"><Instagram className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_insta} onChange={e => setNewMission({...newMission, contact_insta: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram User" /></div></div></div>
+                    </div>
+                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5 text-yellow-600" /> Post Mission (Free)</>}</button></div>
+                </motion.div>
+            </motion.div>
+        )}
         
         {isMissionListOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setIsMissionListOpen(false)}>
