@@ -8,7 +8,7 @@ import {
   MessageSquare, ChevronDown, RefreshCw, User, CornerDownRight, 
   LogIn, LogOut, Search, Plus, Reply, Sparkles, Globe, 
   Briefcase, DollarSign, Calendar, Mail, Maximize2, AtSign, Video, Instagram, 
-  Podcast, BarChart3, Radio, Zap
+  Podcast, BarChart3, Radio, Zap, X, Layers, LayoutGrid
 } from "lucide-react";
 
 import LavaBackground from '@/components/LavaBackground';
@@ -50,7 +50,7 @@ export default function LighthousePage() {
   const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
   const [isMissionListOpen, setIsMissionListOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
-  const [selectedSignal, setSelectedSignal] = useState<SignalData | null>(null); // Stack yerine Modal Detay
+  const [selectedSignal, setSelectedSignal] = useState<SignalData | null>(null); 
   const [isWriting, setIsWriting] = useState(false);
 
   // Form Verileri
@@ -215,7 +215,6 @@ export default function LighthousePage() {
       if (!error) { 
           setCommentText(""); setReplyingTo(null); await fetchSignals(); 
           if(selectedSignal) {
-             // Modaldaki veriyi de güncelle
              const updated = { ...selectedSignal, comments: [...(selectedSignal.comments || []), { id: Date.now(), content: commentText, author: profile?.username, created_at: new Date().toISOString() }] };
              setSelectedSignal(updated as any);
           }
@@ -250,6 +249,12 @@ export default function LighthousePage() {
       return signal.content;
   };
 
+  // EKSİK OLAN FONKSİYON EKLENDİ
+  const getFrequencyColor = (freqId: string) => {
+    const freq = FREQUENCIES.find(f => f.id === freqId);
+    return freq ? `text-[${freq.color.replace('bg-', '')}] border-[${freq.color.replace('bg-', '')}]/50` : 'text-zinc-400 border-white/10';
+  };
+
   const filteredSignals = signals.filter(s => s.content.toLowerCase().includes(searchQuery.toLowerCase()) || s.author.toLowerCase().includes(searchQuery.toLowerCase()) || (s.translation && s.translation.toLowerCase().includes(searchQuery.toLowerCase())));
 
   // --- RENDER ---
@@ -270,7 +275,7 @@ export default function LighthousePage() {
         </AnimatePresence>
       </div>
 
-      {/* HEADER: Minimalist ve Geniş */}
+      {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center bg-black/60 backdrop-blur-lg border-b border-white/5">
         <div className="flex items-center gap-4 cursor-pointer" onClick={() => window.location.reload()}>
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center"><Zap className="w-5 h-5 text-black fill-black" /></div>
@@ -328,7 +333,7 @@ export default function LighthousePage() {
             <div className="flex justify-center py-20"><RefreshCw className="w-8 h-8 animate-spin text-zinc-600" /></div>
         ) : (
             <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-                {/* YENİ SİNYAL OLUŞTURMA KARTI (GRID İÇİNDE) */}
+                {/* YENİ SİNYAL OLUŞTURMA KARTI */}
                 <div onClick={() => setIsWriting(true)} className="break-inside-avoid bg-white/5 border border-dashed border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/10 hover:border-emerald-500/50 transition-all group h-48">
                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><Podcast className="w-6 h-6 text-zinc-400 group-hover:text-emerald-400" /></div>
                     <h3 className="text-sm font-bold text-white">Broadcast Signal</h3>
@@ -363,7 +368,7 @@ export default function LighthousePage() {
 
       {/* ALT NAVİGASYON (DOCK) */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-2xl scale-90 md:scale-100">
-          <button onClick={() => setViewMode('stack')} className="p-3 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-all"><BarChart3 className="w-5 h-5" /></button>
+          <button onClick={() => window.location.reload()} className="p-3 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-all"><BarChart3 className="w-5 h-5" /></button>
           <div className="w-px h-6 bg-white/10 mx-1" />
           <button onClick={() => setIsWriting(true)} className="p-3 bg-white text-black rounded-xl hover:scale-105 transition-transform"><Plus className="w-6 h-6" /></button>
           <div className="w-px h-6 bg-white/10 mx-1" />
@@ -376,7 +381,7 @@ export default function LighthousePage() {
       <AnimatePresence>
         <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
         
-        {/* SIGNAL DETAY MODALI (YENİ) */}
+        {/* SIGNAL DETAY MODALI */}
         {selectedSignal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setSelectedSignal(null)}>
                 <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col max-h-[85vh] shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -431,7 +436,7 @@ export default function LighthousePage() {
             </motion.div>
         )}
 
-        {/* MISSION EKLEME & DETAY MODALLARI (Aynen korundu, sadece stil uyarlandı) */}
+        {/* MISSION EKLEME MODALI */}
         {isMissionModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                 <div className="w-full max-w-md bg-[#0c0c0c] border border-white/10 rounded-2xl p-6">
@@ -450,6 +455,7 @@ export default function LighthousePage() {
             </motion.div>
         )}
 
+        {/* MISSION DETAY */}
         {selectedMission && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[210] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedMission(null)}>
                 <div className="w-full max-w-lg bg-[#0c0c0c] border border-white/10 rounded-2xl p-8 relative" onClick={e => e.stopPropagation()}>
