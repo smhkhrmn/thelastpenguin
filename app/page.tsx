@@ -281,22 +281,13 @@ export default function LighthousePage() {
 
   const handleDragEnd = (event: any, info: PanInfo) => { if (info.offset.x < -100) nextSignal(); else if (info.offset.x > 100) prevSignal(); };
   
-  // DÜZELTİLMİŞ KART STİLİ (Üst üste binme sorunu çözüldü)
   const getCardStyle = (index: number) => {
     const total = filteredSignals.length;
     let dist = (index - currentIndex + total) % total;
     if (dist > total / 2) dist -= total;
-    
-    // Aktif Kart (Ortada, tam görünür)
     if (dist === 0) return { zIndex: 30, x: 0, scale: 1, opacity: 1, filter: "blur(0px)", display: "block" };
-    
-    // Sağdaki Kart (İyice sağa, flu)
     if (dist === 1) return { zIndex: 20, x: 350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
-    
-    // Soldaki Kart (İyice sola, flu)
     if (dist === -1) return { zIndex: 20, x: -350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
-    
-    // Diğerleri gizli
     return { zIndex: -1, x: 0, opacity: 0, display: "none" };
   };
 
@@ -316,68 +307,61 @@ export default function LighthousePage() {
         </AnimatePresence>
       </div>
 
-      <header className={`fixed top-0 left-0 right-0 z-50 p-6 md:p-8 flex flex-col md:flex-row justify-between items-start transition-all duration-500 ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-        <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
+      {/* HEADER & KATEGORİ MENÜSÜ (Laptop Uyumlu) */}
+      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
             <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
-                <h1 className="text-xl md:text-2xl font-bold tracking-tighter mix-blend-difference">The Last Penguin</h1>
-                <span className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-zinc-500 mt-1">Frequency Scanner v1.0</span>
+                <h1 className="text-lg md:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
+                <span className="text-[7px] md:text-[9px] uppercase tracking-[0.2em] text-zinc-500 mt-0.5">Frequency Scanner v1.0</span>
             </div>
-            <div className="flex md:hidden items-center gap-3">
+            <div className="flex md:hidden items-center gap-2">
                  <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 bg-white/10 border-white/10'}`}><Globe className="w-4 h-4" /></button>
                  <button onClick={() => setIsMissionListOpen(true)} className="p-2 rounded-full bg-white/10 border border-white/10 text-emerald-400"><Briefcase className="w-4 h-4" /></button>
-                 {user ? ( <img src={user.user_metadata.avatar_url} className="w-8 h-8 rounded-full border border-white/20 cursor-pointer" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} /> ) : ( <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })} className="p-2 bg-white text-black rounded-full"><LogIn className="w-4 h-4" /></button> )}
             </div>
         </div>
-        <div className="hidden md:flex items-center gap-4">
-            <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
-                <button onClick={() => setViewMode('stack')} className={`p-2 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('log')} className={`p-2 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-4 h-4" /></button>
+        <div className="hidden md:flex items-center gap-3 lg:gap-4">
+            <div className="flex bg-white/5 border border-white/10 p-0.5 rounded-xl">
+                <button onClick={() => setViewMode('stack')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setViewMode('log')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
             </div>
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-2 gap-3 focus-within:border-blue-500/50 transition-all">
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-1.5 gap-2 focus-within:border-blue-500/50 transition-all">
                 <Search className="w-3 h-3 text-zinc-500" />
-                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Scan void..." className="bg-transparent border-none outline-none text-xs w-32" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Scan..." className="bg-transparent border-none outline-none text-[11px] w-20 lg:w-32 text-white" />
             </div>
             {user ? (
-                <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
-                    <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-1.5 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 border-white/10 hover:text-white'}`} title="Global Translate"><Globe className="w-4 h-4" /></button>
-                    <img src={user.user_metadata.avatar_url} className="w-6 h-6 rounded-full border border-white/20 cursor-pointer hover:scale-110 transition-all" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} />
-                    <button onClick={() => supabase.auth.signOut()} className="ml-2 p-1 hover:text-red-400 transition-colors"><LogOut className="w-4 h-4" /></button>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-md">
+                    <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-1 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 border-white/10 hover:text-white'}`}><Globe className="w-3.5 h-3.5" /></button>
+                    <img src={user.user_metadata.avatar_url} className="w-6 h-6 rounded-full border border-white/20 cursor-pointer" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} />
+                    <button onClick={() => supabase.auth.signOut()} className="p-1 hover:text-red-400 transition-colors"><LogOut className="w-3.5 h-3.5" /></button>
                 </div>
-            ) : ( <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })} className="flex items-center gap-2 bg-white text-black px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase hover:scale-105 transition-transform"><LogIn className="w-4 h-4" /> <span>Login</span></button> )}
+            ) : ( 
+                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })} className="bg-white text-black px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase hover:scale-105 transition-transform">Login</button> 
+            )}
         </div>
       </header>
-{/* KATEGORİ MENÜSÜ */}
-<div className="fixed top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
-  <div className="flex bg-black/40 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl gap-1">
-    {FREQUENCIES.map((freq) => (
-      <button
-        key={freq.id}
-        onClick={() => setFilterFreq(freq.id)}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-          filterFreq === freq.id 
-          ? 'bg-white text-black shadow-lg' 
-          : 'text-zinc-500 hover:text-white hover:bg-white/5'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          {freq.id !== 'all' && (
-            <div className={`w-1.5 h-1.5 rounded-full ${freq.color}`} />
-          )}
-          {freq.name}
-        </div>
-      </button>
-    ))}
-  </div>
-</div>
-      <main className={`relative z-10 w-full h-full pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
-        <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
-            <div className="flex md:hidden w-full justify-end mb-4">
-                <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
-                    <button onClick={() => setViewMode('stack')} className={`p-2 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-4 h-4" /></button>
-                    <button onClick={() => setViewMode('log')} className={`p-2 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-4 h-4" /></button>
-                </div>
-            </div>
 
+      {/* KATEGORİ MENÜSÜ */}
+      <div className="fixed top-20 md:top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
+        <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1">
+          {FREQUENCIES.map((freq) => (
+            <button
+              key={freq.id}
+              onClick={() => setFilterFreq(freq.id)}
+              className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all whitespace-nowrap ${
+                filterFreq === freq.id ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                {freq.id !== 'all' && ( <div className={`w-1 h-1 rounded-full ${freq.color}`} /> )}
+                {freq.name}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <main className={`relative z-10 w-full h-full pt-40 lg:pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+        <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
             {!isLoading && dailyQuestion && (
                 <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-3 px-5 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
                     <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
@@ -392,18 +376,7 @@ export default function LighthousePage() {
                 viewMode === 'stack' ? (
                     <div className="relative w-full max-w-2xl h-[55vh] md:h-[550px] flex items-center justify-center perspective-1000 mt-4">
                         {filteredSignals.map((signal, index) => (
-                           <SignalCard 
-                              key={signal.id}
-                              signal={signal}
-                              style={getCardStyle(index)}
-                              user={user}
-                              onDragEnd={handleDragEnd}
-                              onExpand={() => { if(index === currentIndex) setIsExpanded(true); }}
-                              onLike={handleSendSignal}
-                              onTranslate={handleTranslate}
-                              isTranslated={translatedIDs[signal.id]}
-                              isGlobalEnglish={isGlobalEnglish}
-                           />
+                           <SignalCard key={signal.id} signal={signal} style={getCardStyle(index)} user={user} onDragEnd={handleDragEnd} onExpand={() => { if(index === currentIndex) setIsExpanded(true); }} onLike={handleSendSignal} onTranslate={handleTranslate} isTranslated={translatedIDs[signal.id]} isGlobalEnglish={isGlobalEnglish} />
                         ))}
                         <div className="absolute bottom-0 flex items-center gap-6 md:gap-12 z-30 translate-y-1/2">
                             <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/20 border border-white/5 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
@@ -423,10 +396,6 @@ export default function LighthousePage() {
                                             <span className="text-[10px] font-mono text-zinc-600">{new Date(signal.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                         </div>
                                         <p className="text-sm text-zinc-300 leading-relaxed line-clamp-4 break-words">"{renderText(signal)}"</p>
-                                        <div className="flex gap-4 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all text-[10px] font-bold text-zinc-500 uppercase">
-                                            <span className={getFrequencyColor(signal.frequency)}>{signal.frequency}</span>
-                                            <div className="flex items-center gap-1"><Radio className="w-3 h-3 text-blue-500" /> {signal.likes?.length || 0}</div>
-                                        </div>
                                     </div>
                                 </motion.div>
                             ))}
@@ -436,51 +405,37 @@ export default function LighthousePage() {
             ) : <div className="text-center opacity-50"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
         </div>
 
-        <div className="hidden lg:flex flex-col w-72 h-[calc(100vh-8rem)] fixed right-8 top-32 z-40">
+        {/* MISSION BOARD - Responsive Düzenleme (w-72 -> w-64 Laptop için) */}
+        <div className="hidden lg:flex flex-col w-64 xl:w-72 h-[calc(100vh-10rem)] fixed right-4 xl:right-8 top-32 z-40">
             <div className="w-full h-full bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl p-4 flex flex-col overflow-hidden relative">
                 <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest"><Briefcase className="w-3 h-3 text-emerald-400" /> Mission Board</div>
-                    <div className="flex gap-1">
-                        <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded-md transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
-                        <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded-md transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
+                    <div className="flex gap-1.5 items-center">
+                        <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
+                        <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
+                        {/* ARTI BUTONU DÜZELTİLDİ: z-index artırıldı */}
                         <button 
-  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
-  className="relative z-[60] p-1.5 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg"
->
-  <Plus className="w-3.5 h-3.5" />
-</button>
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
+                          className="relative z-[60] p-1 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg ml-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
                     {missions.length > 0 ? missions.map((mission) => (
-                        <div key={mission.id} className={`bg-white/[0.03] border border-white/10 p-3 rounded-xl hover:border-white/30 transition-all cursor-pointer group ${missionViewMode === 'list' ? 'flex items-center justify-between py-2' : ''}`} onClick={() => setSelectedMission(mission)}>
-                            {missionViewMode === 'cards' ? (
-                                <>
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
-                                        <span className="text-[8px] text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
-                                    </div>
-                                    <h4 className="text-xs font-bold text-white leading-tight mb-1 truncate">{mission.title}</h4>
-                                    <p className="text-[10px] text-zinc-500 line-clamp-2 leading-snug">{mission.description}</p>
-                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                                        <span className="text-[9px] font-mono text-emerald-400">{mission.budget}</span>
-                                        <button className="text-[9px] text-zinc-400 hover:text-white transition-colors">Details</button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="flex flex-col min-w-0 pr-2">
-                                        <h4 className="text-xs font-bold text-white truncate">{mission.title}</h4>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className={`text-[8px] font-bold ${mission.type === 'paid' ? 'text-emerald-400' : 'text-blue-400'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
-                                            <span className="text-[8px] text-zinc-600">• {new Date(mission.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="w-3 h-3 text-zinc-600 group-hover:text-white transition-colors" />
-                                </>
-                            )}
+                        <div key={mission.id} className={`bg-white/[0.03] border border-white/10 p-3 rounded-xl hover:border-white/30 transition-all cursor-pointer group`} onClick={() => setSelectedMission(mission)}>
+                            <div className="flex justify-between items-start mb-1">
+                                <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                            </div>
+                            <h4 className="text-[11px] font-bold text-white leading-tight mb-1 truncate">{mission.title}</h4>
+                            <p className="text-[9px] text-zinc-500 line-clamp-2 leading-snug">{mission.description}</p>
+                            <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center text-[8px] font-mono text-emerald-400">
+                                <span>{mission.budget}</span>
+                                <ChevronRight className="w-2.5 h-2.5 text-zinc-600 group-hover:text-white transition-colors" />
+                            </div>
                         </div>
-                    )) : <div className="text-center text-zinc-700 text-[10px] mt-10">No missions active.<br/>Be the first to hire.</div>}
+                    )) : <div className="text-center text-zinc-700 text-[9px] mt-10 italic">No missions active.</div>}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none" />
             </div>
@@ -494,39 +449,31 @@ export default function LighthousePage() {
       )}
 
       <AnimatePresence>
-        <WriteModal 
-           isOpen={isWriting} 
-           onClose={() => setIsWriting(false)} 
-           messageText={messageText}
-           setMessageText={setMessageText}
-           onBroadcast={handleBroadcast}
-           isSending={isSending}
-           selectedFreq={selectedFreq}
-           setSelectedFreq={setSelectedFreq}
-        />
+        <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
         
-        {/* MISSION EKLEME MODALI */}
+        {/* MISSION EKLEME MODALI - En Alta Eklendi */}
         {isMissionModalOpen && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
-                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
-                        <p className="text-xs text-zinc-400 mt-1">Recruit fellow travelers for your project.</p>
+                        <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-5 h-5 text-white" /></button>
                     </div>
-                    <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+                    <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
                         <div><label className="text-xs text-zinc-500 uppercase font-bold">Title</label><input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
                         <div className="flex gap-4">
-                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><div className="flex flex-col gap-2"><button onClick={() => setNewMission({...newMission, type: 'partner'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'partner' ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Co-Founder</button><button onClick={() => setNewMission({...newMission, type: 'paid'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'paid' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Paid Gig</button></div></div>
-                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Budget/Equity</label><input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><select value={newMission.type} onChange={e => setNewMission({...newMission, type: e.target.value as any})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"><option value="partner" className="bg-black">Co-Founder</option><option value="paid" className="bg-black">Paid Gig</option></select></div>
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Budget</label><input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
                         </div>
-                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none h-24 resize-none focus:border-emerald-500/50" /></div>
-                        <div><label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Contact Methods</label><div className="space-y-2"><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-emerald-500/50 transition-colors"><AtSign className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Email (Required)" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-blue-500/50 transition-colors"><Video className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_skype} onChange={e => setNewMission({...newMission, contact_skype: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Skype ID" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-pink-500/50 transition-colors"><Instagram className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_insta} onChange={e => setNewMission({...newMission, contact_insta: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram User" /></div></div></div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none focus:border-emerald-500/50" /></div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Contact Email</label><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
                     </div>
-                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5 text-yellow-600" /> Post Mission (Free)</>}</button></div>
+                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}</button></div>
                 </motion.div>
             </motion.div>
         )}
-        
+
+        {/* MISSION LIST MODAL */}
         {isMissionListOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setIsMissionListOpen(false)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-sm h-[70vh] bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
@@ -536,113 +483,82 @@ export default function LighthousePage() {
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
                         {missions.length > 0 ? missions.map((mission) => (
-                            <div key={mission.id} className="bg-white/5 border border-white/10 p-4 rounded-xl" onClick={() => { setIsMissionListOpen(false); setSelectedMission(mission); }}>
+                            <div key={mission.id} className="bg-white/5 border border-white/10 p-4 rounded-xl cursor-pointer hover:bg-white/10 transition-all" onClick={() => { setIsMissionListOpen(false); setSelectedMission(mission); }}>
                                 <div className="flex justify-between items-start mb-2">
                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
                                     <span className="text-[9px] text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
                                 </div>
                                 <h4 className="text-sm font-bold text-white leading-tight mb-2">{mission.title}</h4>
                                 <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{mission.description}</p>
-                                <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                                    <span className="text-xs font-mono text-emerald-400">{mission.budget}</span>
-                                    <button className="text-xs text-black bg-white px-3 py-1.5 rounded-lg font-bold">Details</button>
-                                </div>
                             </div>
                         )) : <div className="text-center text-zinc-500 text-xs mt-10">No missions active.</div>}
-                    </div>
-                    <div className="p-4 border-t border-white/10">
-                        <button onClick={() => { setIsMissionListOpen(false); setIsMissionModalOpen(true); }} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Post a Mission</button>
                     </div>
                 </motion.div>
             </motion.div>
         )}
 
+        {/* MISSION DETAILS MODAL */}
         {selectedMission && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedMission(null)}>
                 <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
                     <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-start shrink-0">
                         <div className="pr-4">
                             <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest border ${selectedMission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{selectedMission.type === 'paid' ? 'Paid Project' : 'Co-Founder Needed'}</span>
-                            <h2 className="text-xl font-bold text-white mt-3 leading-tight break-words break-all">{selectedMission.title}</h2>
+                            <h2 className="text-xl font-bold text-white mt-3 leading-tight break-words">{selectedMission.title}</h2>
                         </div>
                         <button onClick={() => setSelectedMission(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 shrink-0"><X className="w-5 h-5 text-white" /></button>
                     </div>
                     <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
                         <div className="group cursor-pointer p-3 -m-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5" onClick={() => setExpandedBrief(selectedMission.description)}>
-                            <div className="text-[10px] text-zinc-500 uppercase font-bold mb-2 flex items-center gap-2">
-                                <Briefcase className="w-3 h-3" /> Mission Brief <span className="text-[9px] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto flex items-center gap-1"><Maximize2 className="w-3 h-3" /> Expand</span>
-                            </div>
-                            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap line-clamp-4 break-words break-all">{selectedMission.description}</p>
+                            <div className="text-[10px] text-zinc-500 uppercase font-bold mb-2 flex items-center gap-2"><Briefcase className="w-3 h-3" /> Mission Brief</div>
+                            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{selectedMission.description}</p>
                         </div>
                         <div className="flex gap-4">
                             <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
-                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1 flex items-center gap-2"><DollarSign className="w-3 h-3 text-emerald-400" /> Budget</div>
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1"><DollarSign className="w-3 h-3 inline mr-1" /> Budget</div>
                                 <div className="text-sm font-mono text-white truncate">{selectedMission.budget}</div>
                             </div>
                             <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
-                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1 flex items-center gap-2"><Calendar className="w-3 h-3 text-blue-500" /> Posted</div>
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1"><Calendar className="w-3 h-3 inline mr-1" /> Posted</div>
                                 <div className="text-sm font-mono text-white">{new Date(selectedMission.created_at).toLocaleDateString()}</div>
                             </div>
                         </div>
                         <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl">
-                            <div className="text-[10px] text-emerald-400 uppercase font-bold mb-3 flex items-center gap-2"><Mail className="w-3 h-3" /> Contact Channels</div>
-                            {renderContactInfo(selectedMission.contact_info)}
+                            <div className="text-[10px] text-emerald-400 uppercase font-bold mb-3 flex items-center gap-2"><Mail className="w-3 h-3" /> Contact Information</div>
+                            <div className="text-sm text-white font-mono select-all cursor-pointer break-all">{renderContactInfo(selectedMission.contact_info)}</div>
                         </div>
                     </div>
-                    <div className="p-4 bg-white/5 border-t border-white/10 text-center shrink-0">
-                        <p className="text-[10px] text-zinc-600">Good luck on your mission, traveler.</p>
-                    </div>
                 </motion.div>
             </motion.div>
         )}
 
-        {expandedBrief && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" onClick={() => setExpandedBrief(null)}>
-                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full max-w-3xl bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Full Mission Brief</h3>
-                        <button onClick={() => setExpandedBrief(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10"><X className="w-5 h-5 text-white" /></button>
-                    </div>
-                    <div className="p-8 overflow-y-auto custom-scrollbar">
-                        <p className="text-base text-zinc-300 leading-loose whitespace-pre-wrap font-serif break-words break-all">{expandedBrief}</p>
-                    </div>
-                </motion.div>
-            </motion.div>
-        )}
-
+        {/* DAILY FREQUENCY MODAL */}
         {isDailyOpen && dailyQuestion && (
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsDailyOpen(false)}>
-                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-4xl max-h-[90vh] bg-[#0a0a0a] border border-blue-500/30 rounded-3xl shadow-[0_0_50px_-10px_rgba(59,130,246,0.2)] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-8 border-b border-white/5 bg-blue-900/10 shrink-0">
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-4xl max-h-[90vh] bg-[#0a0a0a] border border-blue-500/30 rounded-3xl shadow-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 md:p-8 border-b border-white/5 bg-blue-900/10 shrink-0">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="text-xs font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-4 h-4" /> Topic of the Day</div>
+                            <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-4 h-4" /> Topic of the Day</div>
                             <button onClick={() => setIsDailyOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight">"{dailyQuestion.content}"</h2>
+                        <h2 className="text-xl md:text-3xl font-serif text-white leading-tight italic">"{dailyQuestion.content}"</h2>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                         <div className="space-y-4">
-                            {dailyResponses.length > 0 ? dailyResponses.map((response) => {
-                                const isTranslated = translatedIDs[response.id];
-                                return (
-                                <div key={response.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 hover:bg-white/[0.05] transition-all">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden border border-white/10"><img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-full h-full object-cover" /></div>
-                                        <div><div className="text-sm font-bold text-white cursor-pointer hover:text-blue-400 transition-colors" onClick={() => { setIsDailyOpen(false); router.push(`/profile/${response.author}`); }}>@{response.author}</div><div className="text-[10px] text-zinc-500">{new Date(response.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div></div>
-                                        <button onClick={(e) => handleTranslate(e, response)} className={`ml-auto p-1.5 rounded-full border transition-all ${isTranslated ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}><Globe className="w-3 h-3" /></button>
+                            {dailyResponses.length > 0 ? dailyResponses.map((response) => (
+                                <div key={response.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden"><img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-full h-full" /></div>
+                                        <div className="text-xs font-bold text-white">@{response.author}</div>
                                     </div>
-                                    <p className="text-zinc-200 leading-relaxed text-lg font-serif">"{renderText(response)}"</p>
-                                    <div className="mt-4 flex gap-4 text-xs text-zinc-500 font-bold uppercase tracking-widest">
-                                        <button onClick={(e) => handleSendSignal(e, response.id)} className="flex items-center gap-2 hover:text-white"><Radio className={`w-4 h-4 ${response.likes?.some((l:any) => l.user_id === user?.id) ? 'text-blue-500' : ''}`} /> {response.likes?.length || 0} Echoes</button>
-                                    </div>
+                                    <p className="text-zinc-200 text-sm md:text-base leading-relaxed">"{response.content}"</p>
                                 </div>
-                            ); }) : <div className="text-center py-20 opacity-40"><MessageSquare className="w-12 h-12 mx-auto mb-4" /><p>No transmissions.</p></div>}
+                            )) : <div className="text-center py-10 opacity-30 text-xs uppercase tracking-widest">No transmissions yet...</div>}
                         </div>
                     </div>
                     <div className="p-6 bg-black/40 border-t border-white/5 shrink-0 flex gap-4">
-                         <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-5 h-5 text-zinc-500" /></div>
                          <div className="flex-1 relative">
-                            <input type="text" value={dailyResponseText} onChange={(e) => setDailyResponseText(e.target.value)} placeholder="Transmit..." className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white outline-none" onKeyDown={(e) => e.key === 'Enter' && handleDailyResponse()} />
+                            <input type="text" value={dailyResponseText} onChange={(e) => setDailyResponseText(e.target.value)} placeholder="Transmit your answer..." className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white outline-none focus:border-blue-500/50" onKeyDown={(e) => e.key === 'Enter' && handleDailyResponse()} />
                             <button onClick={handleDailyResponse} disabled={isSending || !dailyResponseText.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-black rounded-full hover:scale-105 transition-all"><CornerDownRight className="w-4 h-4" /></button>
                          </div>
                     </div>
@@ -650,242 +566,62 @@ export default function LighthousePage() {
              </motion.div>
         )}
 
-        {/* GENİŞLETİLMİŞ SİNYAL MODALI (DETAY VE YORUMLAR) */}
+        {/* GENİŞLETİLMİŞ SİNYAL MODAL (Swipe & Navigation Integrated) */}
         {isExpanded && !isWriting && currentSignal && (
-            <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }} 
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" 
-                onClick={() => setIsExpanded(false)}
-            >
-                
-                {/* MASAÜSTÜ SOL OK */}
-                <button 
-                    onClick={(e) => { e.stopPropagation(); prevSignal(); }}
-                    className="hidden md:flex fixed left-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
-                >
-                    <ChevronLeft className="w-8 h-8" />
-                </button>
-
-                {/* MODAL GÖVDESİ */}
-                <motion.div 
-                    initial={{ scale: 0.9, y: 50 }} 
-                    animate={{ scale: 1, y: 0 }} 
-                    /* MOBİL SWIPE (PARMAK KAYDIRMA) ÖZELLİĞİ */
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.4}
-                    onDragEnd={(e, info) => {
-                        if (info.offset.x < -100) nextSignal();
-                        else if (info.offset.x > 100) prevSignal();
-                    }}
-                    className={`relative w-full max-w-3xl max-h-[85vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col touch-none`} 
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    
-                    {/* MODAL HEADER */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => setIsExpanded(false)}>
+                <button onClick={(e) => { e.stopPropagation(); prevSignal(); }} className="hidden md:flex fixed left-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 active:scale-90"><ChevronLeft className="w-8 h-8" /></button>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.4} onDragEnd={(e, info) => { if (info.offset.x < -100) nextSignal(); else if (info.offset.x > 100) prevSignal(); }} className={`relative w-full max-w-3xl max-h-[85vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col touch-none`} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02] shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5">
-                                <img src={currentSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentSignal.author}`} className="w-full h-full object-cover" alt="Author" />
-                            </div>
-                            <div>
-                                <h2 className="font-bold text-white text-sm md:text-base">{currentSignal.author}</h2>
-                                <p className="text-[10px] text-zinc-500 uppercase">{currentSignal.frequency}</p>
-                            </div>
+                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5"><img src={currentSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentSignal.author}`} className="w-full h-full object-cover" /></div>
+                            <div><h2 className="font-bold text-white text-sm md:text-base">{currentSignal.author}</h2><p className="text-[10px] text-zinc-500 uppercase">{currentSignal.frequency}</p></div>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={(e) => handleTranslate(e, currentSignal)} className={`p-2 rounded-full border transition-all ${translatedIDs[currentSignal.id] ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}>
-                                <Globe className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setIsExpanded(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                                <X className="w-6 h-6" />
-                            </button>
+                            <button onClick={(e) => handleTranslate(e, currentSignal)} className={`p-2 rounded-full border transition-all ${translatedIDs[currentSignal.id] ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}><Globe className="w-4 h-4" /></button>
+                            <button onClick={() => setIsExpanded(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-6 h-6" /></button>
                         </div>
                     </div>
-
-                    {/* İÇERİK ALANI */}
                     <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
-                        <p className="text-lg md:text-2xl font-serif text-zinc-200 leading-relaxed whitespace-pre-wrap mb-10 mt-4 italic">
-                            "{renderText(currentSignal)}"
-                        </p>
-
+                        <p className="text-lg md:text-2xl font-serif text-zinc-200 leading-relaxed whitespace-pre-wrap mb-10 mt-4 italic">"{renderText(currentSignal)}"</p>
                         <div className="pt-8 border-t border-white/5">
                             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6">Log Entries ({currentSignal.comments?.length || 0})</h3>
-                            <div className="space-y-6">
+                            <div className="space-y-6 pb-4">
                                 {(showAllComments ? currentSignal.comments : currentSignal.comments?.slice(0, 2))?.map((comment: any) => (
                                     <div key={comment.id} className="flex gap-4 group">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0">
-                                            <User className="w-4 h-4 text-zinc-400" />
-                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0"><User className="w-4 h-4 text-zinc-400" /></div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="text-sm font-bold text-zinc-300">{comment.author}</span>
                                                 <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleTimeString()}</span>
                                             </div>
                                             <p className="text-sm text-zinc-400 leading-relaxed">{comment.content}</p>
-                                            <button onClick={() => initiateReply(comment.author)} className="text-[10px] text-zinc-600 hover:text-white mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                <Reply className="w-3 h-3" /> Reply
-                                            </button>
+                                            <button onClick={() => initiateReply(comment.author)} className="text-[10px] text-zinc-600 hover:text-white mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"><Reply className="w-3 h-3" /> Reply</button>
                                         </div>
                                     </div>
                                 ))}
                                 {!showAllComments && currentSignal.comments && currentSignal.comments.length > 2 && (
-                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2 pl-12">
-                                        <span>Expand {currentSignal.comments.length - 2} more logs</span>
-                                        <ChevronDown className="w-3 h-3" />
-                                    </button>
+                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 mt-2 pl-12"><span>Expand logs</span><ChevronDown className="w-3 h-3" /></button>
                                 )}
                             </div>
                         </div>
                     </div>
-                    
-                    {/* YORUM YAZMA ALANI */}
                     <div className="p-4 md:p-6 bg-black/40 border-t border-white/5 shrink-0">
-                        {replyingTo && (
-                            <div className="flex items-center justify-between mb-2 px-12 text-xs text-blue-400">
-                                <span>Replying to <span className="font-bold">@{replyingTo}</span></span>
-                                <button onClick={() => setReplyingTo(null)} className="hover:text-white"><X className="w-3 h-3" /></button>
-                            </div>
-                        )}
                         <div className="flex gap-3 items-center">
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                                <User className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" />
-                            </div>
+                            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" /></div>
                             <div className="flex-1 relative">
-                                <input 
-                                    ref={inputRef} 
-                                    type="text" 
-                                    value={commentText} 
-                                    onChange={(e) => setCommentText(e.target.value)} 
-                                    placeholder="Transmit a reply..." 
-                                    className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 md:py-3 px-5 text-sm text-white outline-none focus:border-white/30 pr-12" 
-                                    onKeyDown={(e) => e.key === 'Enter' && handlePostComment(currentSignal.id)} 
-                                />
-                                <button 
-                                    onClick={() => handlePostComment(currentSignal.id)} 
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:scale-105 transition-all"
-                                >
-                                    <CornerDownRight className="w-4 h-4" />
-                                </button>
+                                <input ref={inputRef} type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Transmit a reply..." className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 md:py-3 px-5 text-[13px] text-white outline-none focus:border-white/30 pr-12" onKeyDown={(e) => e.key === 'Enter' && handlePostComment(currentSignal.id)} />
+                                <button onClick={() => handlePostComment(currentSignal.id)} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:scale-110 transition-all"><CornerDownRight className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
                 </motion.div>
-
-                {/* MASAÜSTÜ SAĞ OK */}
-                <button 
-                    onClick={(e) => { e.stopPropagation(); nextSignal(); }}
-                    className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
-                >
-                    <ChevronRight className="w-8 h-8" />
-                </button>
-
-                {/* MOBİL İÇİN SABİT ALT NAVİGASYON (Parmak hizası) */}
+                <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 active:scale-90"><ChevronRight className="w-8 h-8" /></button>
                 <div className="md:hidden fixed bottom-10 left-0 right-0 flex justify-between px-10 z-[120] pointer-events-none">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); prevSignal(); }}
-                        className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all"
-                    >
-                        <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); nextSignal(); }}
-                        className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all"
-                    >
-                        <ChevronRight className="w-6 h-6" />
-                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); prevSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronLeft className="w-6 h-6" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); nextSignal(); }} className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all shadow-2xl"><ChevronRight className="w-6 h-6" /></button>
                 </div>
-
             </motion.div>
         )}
-        {/* MISSION EKLEME MODALI */}
-{isMissionModalOpen && (
-    <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }} 
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
-        onClick={() => setIsMissionModalOpen(false)}
-    >
-        <motion.div 
-            initial={{ scale: 0.9, y: 50 }} 
-            animate={{ scale: 1, y: 0 }} 
-            className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" 
-            onClick={(e) => e.stopPropagation()}
-        >
-            <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission
-                </h2>
-                <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full">
-                    <X className="w-5 h-5 text-white" />
-                </button>
-            </div>
-            
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Title</label>
-                    <input 
-                        value={newMission.title} 
-                        onChange={e => setNewMission({...newMission, title: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" 
-                        placeholder="Project title..."
-                    />
-                </div>
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Type</label>
-                        <select 
-                            value={newMission.type} 
-                            onChange={e => setNewMission({...newMission, type: e.target.value as any})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"
-                        >
-                            <option value="partner" className="bg-black">Co-Founder</option>
-                            <option value="paid" className="bg-black">Paid Gig</option>
-                        </select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Budget</label>
-                        <input 
-                            value={newMission.budget} 
-                            onChange={e => setNewMission({...newMission, budget: e.target.value})} 
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
-                            placeholder="e.g. $500 or %10"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Mission Details</label>
-                    <textarea 
-                        value={newMission.description} 
-                        onChange={e => setNewMission({...newMission, description: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Contact Email</label>
-                    <input 
-                        value={newMission.contact_email} 
-                        onChange={e => setNewMission({...newMission, contact_email: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
-                    />
-                </div>
-            </div>
-
-            <div className="p-6 border-t border-white/10 bg-black/40">
-                <button 
-                    onClick={handleCreateMission} 
-                    disabled={isPostingMission || !newMission.title || !newMission.contact_email}
-                    className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                >
-                    {isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}
-                </button>
-            </div>
-        </motion.div>
-    </motion.div>
-)}
       </AnimatePresence>
     </div>
   );
