@@ -23,7 +23,6 @@ export default function SignalCard({
   const router = useRouter();
   const hasLiked = signal.likes?.some((l: any) => l.user_id === user?.id);
   
-  // Metin gösterme mantığı
   const displayContent = ((isGlobalEnglish || isTranslated) && signal.translation) 
     ? signal.translation 
     : signal.content;
@@ -45,7 +44,8 @@ export default function SignalCard({
       className="absolute w-full max-w-2xl cursor-pointer select-none touch-action-none"
       onClick={onExpand}
     >
-      <div className="relative bg-black/40 border backdrop-blur-2xl rounded-[2rem] shadow-2xl overflow-hidden group transition-all flex flex-col h-full max-h-[500px] border-white/10">
+      {/* GÜNCELLEME: Arka planı koyulaştırdık (bg-zinc-950) ve border'ı belirginleştirdik */}
+      <div className="relative bg-zinc-950 border border-white/20 rounded-[2rem] shadow-2xl overflow-hidden group transition-all flex flex-col h-full max-h-[500px]">
         <div className="p-8 pb-4">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3 group/author" onClick={(e) => { e.stopPropagation(); router.push(`/profile/${encodeURIComponent(signal.author)}`); }}>
@@ -73,7 +73,7 @@ export default function SignalCard({
           </div>
           <p className="text-xl md:text-2xl font-serif text-zinc-200 line-clamp-3 mt-4">"{displayContent}"</p>
         </div>
-        <div className="flex-1 bg-black/20 p-6 pb-20 border-t border-white/5 flex flex-col gap-4">
+        <div className="flex-1 bg-black/40 p-6 pb-20 border-t border-white/5 flex flex-col gap-4">
           {signal.comments && signal.comments.length > 0 ? (
             signal.comments.slice(-2).map((comment: any) => (
               <div key={comment.id} className="flex items-start gap-3 opacity-60">
