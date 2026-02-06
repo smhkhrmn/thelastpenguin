@@ -623,44 +623,98 @@ export default function LighthousePage() {
              </motion.div>
         )}
 
+        {/* GENİŞLETİLMİŞ SİNYAL MODALI (DETAY VE YORUMLAR) */}
         {isExpanded && !isWriting && currentSignal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => setIsExpanded(false)}>
-                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className={`w-full max-w-3xl max-h-[90vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col`} onClick={(e) => e.stopPropagation()}>
+                
+                {/* SOL OK (Masaüstü - Sabit) */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); prevSignal(); }}
+                    className="hidden md:flex fixed left-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                >
+                    <ChevronLeft className="w-8 h-8" />
+                </button>
+
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className={`relative w-full max-w-3xl max-h-[90vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col`} onClick={(e) => e.stopPropagation()}>
+                    
+                    {/* MOBİL ÜST NAVİGASYON (Geri - Başlık - İleri) */}
+                    <div className="flex md:hidden items-center justify-between p-4 border-b border-white/5 bg-white/[0.02] shrink-0">
+                        <button onClick={prevSignal} className="p-2 text-zinc-400 active:text-white"><ChevronLeft className="w-6 h-6" /></button>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Signal Explorer</span>
+                        <button onClick={nextSignal} className="p-2 text-zinc-400 active:text-white"><ChevronRight className="w-6 h-6" /></button>
+                    </div>
+
+                    {/* MODAL HEADER (Yazar Bilgisi ve Kapatma) */}
                     <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02] shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5"><img src={currentSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentSignal.author}`} className="w-full h-full object-cover" alt="Author" /></div>
-                            <div><h2 className="font-bold text-white">{currentSignal.author}</h2><p className="text-xs text-zinc-500 uppercase">{currentSignal.frequency}</p></div>
+                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5">
+                                <img src={currentSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentSignal.author}`} className="w-full h-full object-cover" alt="Author" />
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-white">{currentSignal.author}</h2>
+                                <p className="text-xs text-zinc-500 uppercase">{currentSignal.frequency}</p>
+                            </div>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={(e) => handleTranslate(e, currentSignal)} className={`p-2 rounded-full border transition-all ${translatedIDs[currentSignal.id] ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}><Globe className="w-4 h-4" /></button>
-                            <button onClick={() => setIsExpanded(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-6 h-6" /></button>
+                            <button onClick={(e) => handleTranslate(e, currentSignal)} className={`p-2 rounded-full border transition-all ${translatedIDs[currentSignal.id] ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}>
+                                <Globe className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setIsExpanded(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
                         </div>
                     </div>
+
+                    {/* İÇERİK VE YORUMLAR ALANI */}
                     <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
-                        <p className="text-xl md:text-2xl font-serif text-zinc-200 leading-relaxed whitespace-pre-wrap mb-10 mt-6">"{renderText(currentSignal)}"</p>
+                        {/* Ana Metin */}
+                        <p className="text-xl md:text-2xl font-serif text-zinc-200 leading-relaxed whitespace-pre-wrap mb-10 mt-6 italic">
+                            "{renderText(currentSignal)}"
+                        </p>
+
+                        {/* Yorumlar (Log Entries) */}
                         <div className="pt-8 border-t border-white/5">
                             <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6">Log Entries ({currentSignal.comments?.length || 0})</h3>
                             <div className="space-y-6">
                                 {(showAllComments ? currentSignal.comments : currentSignal.comments?.slice(0, 2))?.map((comment: any) => (
                                     <div key={comment.id} className="flex gap-4 group">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0"><User className="w-4 h-4 text-zinc-400" /></div>
+                                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0">
+                                            <User className="w-4 h-4 text-zinc-400" />
+                                        </div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="text-sm font-bold text-zinc-300">{comment.author}</span>
                                                 <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleTimeString()}</span>
-                                                {comment.reply_to && <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Replying to @{comment.reply_to}</span>}
+                                                {comment.reply_to && (
+                                                    <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Replying to @{comment.reply_to}</span>
+                                                )}
                                             </div>
                                             <p className="text-sm text-zinc-400 leading-relaxed">{comment.content}</p>
-                                            <button onClick={() => initiateReply(comment.author)} className="text-[10px] text-zinc-600 hover:text-white mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"><Reply className="w-3 h-3" /> Reply</button>
+                                            <button onClick={() => initiateReply(comment.author)} className="text-[10px] text-zinc-600 hover:text-white mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <Reply className="w-3 h-3" /> Reply
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
+                                
+                                {/* Daha Fazla Yorum Göster Butonu */}
                                 {!showAllComments && currentSignal.comments && currentSignal.comments.length > 2 && (
-                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2 pl-12"><span>Expand {currentSignal.comments.length - 2} more logs</span><ChevronDown className="w-3 h-3" /></button>
+                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2 pl-12">
+                                        <span>Expand {currentSignal.comments.length - 2} more logs</span>
+                                        <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                )}
+
+                                {(!currentSignal.comments || currentSignal.comments.length === 0) && (
+                                    <div className="text-center py-4 opacity-30 text-xs uppercase tracking-widest text-zinc-500">
+                                        No log entries found.
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
+                    
+                    {/* YORUM YAZMA ALANI (ALT PANEL) */}
                     <div className="p-4 md:p-6 bg-black/40 border-t border-white/5 shrink-0">
                         {replyingTo && (
                             <div className="flex items-center justify-between mb-2 px-12 text-xs text-blue-400">
@@ -669,14 +723,38 @@ export default function LighthousePage() {
                             </div>
                         )}
                         <div className="flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-5 h-5 text-zinc-500" /></div>
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                <User className="w-5 h-5 text-zinc-500" />
+                            </div>
                             <div className="flex-1 relative">
-                                <input ref={inputRef} type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={replyingTo ? `Reply to @${replyingTo}...` : "Transmit a reply..."} className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white outline-none focus:border-white/30 pr-12" onKeyDown={(e) => e.key === 'Enter' && handlePostComment(currentSignal.id)} />
-                                <button onClick={() => handlePostComment(currentSignal.id)} disabled={isPostingComment || !commentText.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-black rounded-full hover:scale-105 disabled:opacity-50 transition-all"><CornerDownRight className="w-4 h-4" /></button>
+                                <input 
+                                    ref={inputRef} 
+                                    type="text" 
+                                    value={commentText} 
+                                    onChange={(e) => setCommentText(e.target.value)} 
+                                    placeholder={replyingTo ? `Reply to @${replyingTo}...` : "Transmit a reply..."} 
+                                    className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white outline-none focus:border-white/30 pr-12" 
+                                    onKeyDown={(e) => e.key === 'Enter' && handlePostComment(currentSignal.id)} 
+                                />
+                                <button 
+                                    onClick={() => handlePostComment(currentSignal.id)} 
+                                    disabled={isPostingComment || !commentText.trim()} 
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-black rounded-full hover:scale-105 disabled:opacity-50 transition-all"
+                                >
+                                    <CornerDownRight className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     </div>
                 </motion.div>
+
+                {/* SAĞ OK (Masaüstü - Sabit) */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); nextSignal(); }}
+                    className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                >
+                    <ChevronRight className="w-8 h-8" />
+                </button>
             </motion.div>
         )}
       </AnimatePresence>
