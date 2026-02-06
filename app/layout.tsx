@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { GoogleAnalytics } from '@next/third-parties/google'; // <--- Analytics Kütüphanesi
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
         height: 630,
       },
     ],
-    locale: "en_US", 
+    locale: "en_US",
     type: "website",
   },
   robots: {
@@ -39,8 +40,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en"> 
-      <body className={inter.className}>{children}</body>
+    <html lang="en">
+      <body className={inter.className}>
+        {children}
+        {/* Google Analytics Kodun Buraya Eklendi 👇 */}
+        <GoogleAnalytics gaId="G-SQYS84GC72" />
+      </body>
     </html>
   );
 }
