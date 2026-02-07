@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   MessageSquare, User, CornerDownRight, LogIn, LogOut, Search, Plus, 
-  Sparkles, Globe, Briefcase, Radio, Zap, LayoutGrid, Terminal,
-  ChevronRight, X, Hash, Activity, Cpu
+  Sparkles, Globe, Briefcase, Radio, Compass, LayoutTemplate,
+  ChevronRight, X, Star, Send, Feather, Bell
 } from "lucide-react";
 
 import ProfileSetup from '@/components/ProfileSetup';
@@ -24,22 +24,23 @@ const translateText = async (text: string) => {
     } catch (error) { return text; }
 };
 
-// Renkleri yeni temaya uyarla (Daha parlak, neon renkler)
-const getFrequencyColor = (freqId: string) => {
-    const colors: {[key: string]: string} = {
-        'general': 'text-zinc-400 border-zinc-400',
-        'tech': 'text-cyan-400 border-cyan-400',
-        'art': 'text-purple-400 border-purple-400',
-        'science': 'text-blue-400 border-blue-400',
-        'philosophy': 'text-yellow-400 border-yellow-400',
-        'music': 'text-pink-400 border-pink-400',
-        'business': 'text-emerald-400 border-emerald-400',
+// Yeni Tema Renkleri (Altın/Amber vurgulu)
+const getFrequencyStyle = (freqId: string) => {
+    const styles: {[key: string]: string} = {
+        'general': 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20',
+        'tech': 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+        'art': 'bg-purple-500/10 text-purple-300 border-purple-500/20',
+        'science': 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+        'philosophy': 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+        'music': 'bg-pink-500/10 text-pink-300 border-pink-500/20',
+        'business': 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
     };
-    return colors[freqId] || 'text-zinc-400 border-zinc-400';
+    return styles[freqId] || 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20';
 };
 
 export default function LighthousePage() {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // STATE
   const [signals, setSignals] = useState<SignalData[]>([]);
@@ -54,14 +55,14 @@ export default function LighthousePage() {
   const [filterFreq, setFilterFreq] = useState("all");
   const [isGlobalEnglish, setIsGlobalEnglish] = useState(false);
   const [translatedIDs, setTranslatedIDs] = useState<{[key: number]: boolean}>({});
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // UI State
   const [isWriting, setIsWriting] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<SignalData | null>(null);
-  const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showRightPanel, setShowRightPanel] = useState<'missions' | 'notifications' | null>(null); // Yeni sağ panel kontrolü
 
   // Form State
   const [selectedFreq, setSelectedFreq] = useState(FREQUENCIES[1]);
@@ -73,12 +74,6 @@ export default function LighthousePage() {
   const [isPostingMission, setIsPostingMission] = useState(false);
 
   // --- FETCHING & EFFECTS ---
-  useEffect(() => {
-      // Saat efekti için
-      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-      return () => clearInterval(timer);
-  }, []);
-
   useEffect(() => {
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -223,297 +218,297 @@ export default function LighthousePage() {
 
   // --- RENDER ---
   return (
-    <div className="relative min-h-screen w-full bg-[#020202] text-cyan-50 font-mono overflow-hidden terminal-grid-bg selection:bg-cyan-500/20">
+    <div className="relative min-h-screen w-full font-sans selection:bg-indigo-500/30">
+      <div className="stars-bg"></div>
+      <div className="nebula-glow"></div>
       {showSetup && user && ( <ProfileSetup userId={user.id} onComplete={() => { setShowSetup(false); fetchProfile(user.id); }} /> )}
-      <div className="scanline"></div>
 
-      {/* TOP BAR - TERMINAL HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black border-b-2 border-cyan-900/50 px-4 py-2 flex justify-between items-center uppercase tracking-widest text-xs">
-        <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold">
-                <Terminal className="w-4 h-4" />
-                <span>TLP.SYS // VER 2.0.1</span>
+      {/* HEADER - Minimalist ve Zarif */}
+      <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 flex justify-between items-center bg-black/20 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.location.reload()}>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                <Compass className="w-5 h-5 text-white" />
             </div>
-            <div className="hidden md:flex items-center gap-2 text-zinc-500">
-                <Activity className="w-3 h-3 animate-pulse" />
-                <span>UPLINK: STABLE</span>
-            </div>
+            <h1 className="text-lg font-bold tracking-tight text-white">The Last Penguin</h1>
         </div>
-        <div className="flex items-center gap-4 font-bold">
-            <span className="text-zinc-500">{currentTime.toLocaleTimeString([], {hour12:false})} UTC</span>
+
+        <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 focus-within:border-white/30 transition-all">
+                <Search className="w-4 h-4 text-slate-400 mr-2" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search frequency..." className="bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 w-40 lg:w-56" />
+            </div>
+            
             {user ? (
-                <div className="flex items-center gap-2 text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)}>
-                    <span>[{profile?.username || user.email.split('@')[0]}]</span>
-                    <LogOut className="w-3 h-3 hover:text-red-500" onClick={(e) => { e.stopPropagation(); supabase.auth.signOut(); }} />
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full transition-all ${isGlobalEnglish ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}><Globe className="w-5 h-5" /></button>
+                    <div className="relative group">
+                        <img src={user.user_metadata.avatar_url} className="w-9 h-9 rounded-full border border-white/10 cursor-pointer group-hover:border-indigo-400 transition-all" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} />
+                        <div className="absolute right-0 mt-2 w-48 bg-[#0a0a20] border border-white/10 rounded-xl shadow-xl py-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-50">
+                            <button onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 flex items-center gap-2"><User className="w-4 h-4" /> Profile</button>
+                            <button onClick={() => supabase.auth.signOut()} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 flex items-center gap-2"><LogOut className="w-4 h-4" /> Log Out</button>
+                        </div>
+                    </div>
                 </div>
             ) : (
-                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="text-cyan-400 hover:text-cyan-300">[ INITIALIZE LOGIN ]</button>
+                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-bold transition-all backdrop-blur-md border border-white/10">Login</button>
             )}
         </div>
       </header>
 
-      <div className="flex h-screen pt-10 max-w-[1920px] mx-auto">
-        
-        {/* SOL PANEL - KONTROL MERKEZİ */}
-        <aside className="hidden md:flex flex-col w-72 border-r-2 border-cyan-900/50 bg-black p-4 z-40">
-            <div className="mb-8">
-                <h1 className="text-2xl font-black tracking-tighter text-white mb-1">THE LAST<br/><span className="text-cyan-400">PENGUIN</span></h1>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">Frequency Scanner Unit</p>
-            </div>
+      {/* ANA YAPI - 3 Sütunlu Izgara (Grid) */}
+      <div className="pt-20 h-screen flex justify-center overflow-hidden relative z-10">
+          
+          {/* SOL KENAR ÇUBUĞU (Navigasyon) - Floating Dock Stili */}
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex flex-col items-center gap-4 p-4 z-50">
+              <div className="flex md:flex-col items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl">
+                  <button onClick={() => {setFilterFreq('all'); setShowRightPanel(null)}} className={`p-3 rounded-xl transition-all group relative ${filterFreq === 'all' ? 'bg-indigo-500/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                      <LayoutTemplate className="w-5 h-5" />
+                      <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none hidden md:block">All Signals</span>
+                  </button>
+                  {FREQUENCIES.slice(0, 3).map(freq => (
+                      <button key={freq.id} onClick={() => setFilterFreq(freq.id)} className={`p-3 rounded-xl transition-all group relative ${filterFreq === freq.id ? `bg-${freq.color.split('-')[1]}-500/20 text-white` : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                          <div className={`w-2.5 h-2.5 rounded-full ${freq.color} shadow-sm`}></div>
+                          <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none hidden md:block">{freq.name}</span>
+                      </button>
+                  ))}
+                  <div className="w-px h-6 bg-white/10 md:w-6 md:h-px my-1"></div>
+                  <button onClick={() => setShowRightPanel(showRightPanel === 'missions' ? null : 'missions')} className={`p-3 rounded-xl transition-all group relative ${showRightPanel === 'missions' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                      <Briefcase className="w-5 h-5" />
+                       {missions.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-amber-400 rounded-full shadow-sm"></span>}
+                  </button>
+              </div>
+              
+              <button onClick={() => setIsWriting(true)} className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all md:mt-4">
+                  <Feather className="w-6 h-6" />
+              </button>
+          </div>
 
-            <button onClick={() => setIsWriting(true)} className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold py-3 px-4 flex items-center justify-center gap-2 transition-all uppercase tracking-wider text-sm mb-6 border-2 border-cyan-500 hover:border-cyan-300 active:translate-y-0.5">
-                <Zap className="w-4 h-4 fill-black" /> NEW BROADCAST
-            </button>
+          {/* ORTA SÜTUN - AKIŞ (FEED) */}
+          <main className="flex-1 max-w-2xl w-full h-full overflow-y-auto custom-scrollbar p-4 pb-32 md:pb-4 space-y-6 mask-image-b-fade">
+              
+              {/* Günlük Soru Kartı (Premium His) */}
+              {dailyQuestion && (
+                  <div onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }} className="relative overflow-hidden rounded-2xl cursor-pointer group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 backdrop-blur-xl border border-white/10 transition-all group-hover:border-amber-500/30"></div>
+                      <div className="relative p-6 flex flex-col items-center text-center z-10">
+                          <div className="flex items-center gap-2 text-amber-300 text-xs font-bold uppercase tracking-widest mb-3">
+                              <Star className="w-4 h-4 fill-current" /> Daily Reflection
+                          </div>
+                          <h2 className="text-xl md:text-2xl font-serif italic text-white mb-4 leading-relaxed">"{dailyQuestion.content}"</h2>
+                          <div className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 px-4 py-2 rounded-full">
+                              <Sparkles className="w-4 h-4" /> {dailyResponses.length} Explorers Responded
+                          </div>
+                      </div>
+                  </div>
+              )}
 
-            <nav className="space-y-1 flex-1">
-                <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold mb-2 pl-2">Frequency Filters</div>
-                <button onClick={() => setFilterFreq('all')} className={`w-full flex items-center gap-3 px-3 py-2 transition-all border-l-2 text-sm ${filterFreq === 'all' ? 'border-cyan-400 text-cyan-400 bg-cyan-950/30' : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}>
-                    <LayoutGrid className="w-4 h-4" /> [ALL SIGNALS]
-                </button>
-                {FREQUENCIES.map((freq) => (
-                    <button key={freq.id} onClick={() => setFilterFreq(freq.id)} className={`w-full flex items-center gap-3 px-3 py-2 transition-all border-l-2 text-sm uppercase ${filterFreq === freq.id ? `border-${freq.color.split('-')[1]} text-${freq.color.split('-')[1]} bg-${freq.color.split('-')[1]}/10` : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'}`}>
-                        <Hash className="w-4 h-4" /> [{freq.name}]
-                    </button>
-                ))}
-            </nav>
+              {/* Sinyal Kartları */}
+              {isLoading ? (
+                  <div className="flex justify-center py-20">
+                      <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                  </div>
+              ) : filteredSignals.map((signal) => (
+                  <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} key={signal.id} onClick={() => setSelectedSignal(signal)} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer group relative overflow-hidden shadow-lg shadow-black/10">
+                      {/* Glow effect on hover */}
+                      <div className={`absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-transparent via-${getFrequencyColor(signal.frequency).split(' ')[1].replace('text-','')}-500/10 to-transparent pointer-events-none`}></div>
+                      
+                      <div className="flex items-start justify-between mb-4 relative z-10">
+                          <div className="flex items-center gap-3">
+                              <img src={signal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${signal.author}`} className="w-11 h-11 rounded-full border-2 border-white/5 group-hover:border-white/20 transition-colors" />
+                              <div>
+                                  <div className="flex items-center gap-2">
+                                      <span className="font-bold text-white text-[15px]">@{signal.author}</span>
+                                      {signal.role && <span className="text-[11px] bg-white/5 px-2 py-0.5 rounded-full text-slate-400">{signal.role}</span>}
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-0.5">{new Date(signal.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+                              </div>
+                          </div>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${getFrequencyStyle(signal.frequency)}`}>{signal.frequency}</span>
+                      </div>
+                      
+                      <p className="text-slate-200 leading-relaxed whitespace-pre-wrap mb-5 pl-2 border-l-2 border-white/10 font-sans relative z-10">"{renderText(signal)}"</p>
+                      
+                      <div className="flex items-center gap-6 text-sm text-slate-400 relative z-10">
+                          <button onClick={(e) => handleSendSignal(e, signal.id)} className={`flex items-center gap-2 transition-colors ${signal.likes?.some((l:any) => l.user_id === user?.id) ? 'text-indigo-400' : 'hover:text-white'}`}>
+                              <Radio className="w-4 h-4" /> {signal.likes?.length || 0}
+                          </button>
+                          <button className="flex items-center gap-2 hover:text-white transition-colors">
+                              <MessageSquare className="w-4 h-4" /> {signal.comments?.length || 0}
+                          </button>
+                          <button onClick={(e) => handleTranslate(e, signal)} className="ml-auto hover:text-white transition-colors p-1 bg-white/5 rounded-md"><Globe className="w-4 h-4" /></button>
+                      </div>
+                  </motion.div>
+              ))}
+          </main>
 
-            <div className="mt-auto pt-4 border-t-2 border-cyan-900/30">
-                 <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`w-full flex items-center gap-2 px-3 py-2 text-xs uppercase tracking-wider border-2 transition-all ${isGlobalEnglish ? 'border-cyan-400 text-cyan-400 bg-cyan-950/30' : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}>
-                    <Globe className="w-4 h-4" /> {isGlobalEnglish ? 'Auto-Translate: ON' : 'Auto-Translate: OFF'}
-                </button>
-            </div>
-        </aside>
-
-        {/* ORTA PANEL - VERİ AKIŞI (FEED) */}
-        <main className="flex-1 h-full overflow-y-auto relative scroll-smooth no-scrollbar bg-black/80 z-30">
-            <div className="max-w-3xl mx-auto p-4 md:p-8 pb-32">
-                
-                {/* SEARCH & MOBILE CONTROLS */}
-                <div className="mb-8 flex gap-2 sticky top-0 pt-4 bg-black/80 backdrop-blur-md z-40 pb-4 border-b-2 border-cyan-900/30">
-                    <div className="flex-1 relative flex items-center bg-zinc-900 border-2 border-zinc-800 p-1 px-3 focus-within:border-cyan-400 transition-all">
-                        <Search className="w-5 h-5 text-zinc-600 mr-2" />
-                        <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="SEARCH DATABASE..." className="bg-transparent border-none outline-none text-cyan-50 w-full placeholder:text-zinc-700 font-mono text-sm uppercase" />
+          {/* SAĞ KAYAR PANEL (Mission & Notifications) */}
+          <AnimatePresence>
+            {showRightPanel && (
+                <motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-96 bg-[#0a0a20]/90 backdrop-blur-xl border-l border-white/10 z-[60] p-6 flex flex-col shadow-2xl">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-xl font-bold flex items-center gap-3">
+                            {showRightPanel === 'missions' ? <><Briefcase className="w-6 h-6 text-amber-400" /> Missions & Bounties</> : <>Notifications</>}
+                        </h2>
+                        <button onClick={() => setShowRightPanel(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                     </div>
-                     <button onClick={() => setIsMissionListOpen(!isMissionListOpen)} className="md:hidden p-3 border-2 border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-all"><Briefcase className="w-5 h-5" /></button>
-                </div>
 
-                {/* DAILY QUESTION TERMINAL */}
-                {dailyQuestion && (
-                    <div onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }} className="mb-8 border-2 border-dashed border-cyan-500/30 p-4 bg-cyan-950/10 cursor-pointer hover:bg-cyan-950/20 hover:border-cyan-400/50 transition-all group relative overflow-hidden">
-                        <div className="absolute top-0 left-0 bg-cyan-400 text-black text-[9px] font-bold px-2 py-1 uppercase tracking-widest">Priority Intercept</div>
-                        <div className="mt-4">
-                            <h3 className="text-lg md:text-xl font-bold text-white mb-2 uppercase tracking-tight">"{dailyQuestion.content}"</h3>
-                             <div className="flex justify-between items-end">
-                                <div className="text-xs text-cyan-600 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-3 h-3" /> {dailyResponses.length} Responses Logged</div>
-                                <span className="text-cyan-400 text-sm font-bold group-hover:underline decoration-2 underline-offset-4">ACCESS LOG &gt;&gt;</span>
-                            </div>
-                        </div>
-                        <div className="absolute inset-0 border-2 border-cyan-500/0 group-hover:border-cyan-500/100 transition-all pointer-events-none animate-pulse"></div>
-                    </div>
-                )}
-
-                {/* DATA STREAM (FEED) */}
-                <div className="space-y-4">
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Cpu className="w-12 h-12 text-cyan-500 animate-spin" />
-                            <div className="text-cyan-500 text-sm uppercase tracking-[0.3em] animate-pulse">Initializing Data Stream...</div>
-                        </div>
-                    ) : filteredSignals.map((signal) => (
-                        <div key={signal.id} onClick={() => setSelectedSignal(signal)} className="bg-zinc-950 border-2 border-zinc-800 p-5 cursor-pointer hover:border-cyan-700/50 transition-all group relative">
-                            {/* Header Data */}
-                            <div className="flex justify-between items-start mb-4 text-xs font-mono pb-3 border-b border-zinc-900">
-                                <div className="flex items-center gap-3">
-                                     <div className="w-8 h-8 bg-zinc-900 border border-zinc-700 flex items-center justify-center font-bold text-zinc-400 group-hover:text-cyan-400 group-hover:border-cyan-400 transition-colors">
-                                        {signal.author.slice(0,2).toUpperCase()}
-                                     </div>
-                                     <div>
-                                        <div className="font-bold text-white group-hover:text-cyan-400 transition-colors">User: [{signal.author}]</div>
-                                        <div className="text-zinc-600">Role: &lt;{signal.role || 'Unknown'}&gt;</div>
-                                     </div>
+                    {showRightPanel === 'missions' && (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 -mr-2 pr-2">
+                            <button onClick={() => setIsMissionModalOpen(true)} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition-transform mb-4">
+                                <Plus className="w-5 h-5" /> Post New Mission
+                            </button>
+                            {missions.length > 0 ? missions.map((mission) => (
+                                <div key={mission.id} onClick={() => setSelectedMission(mission)} className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 hover:border-amber-500/30 transition-all cursor-pointer group">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type}</span>
+                                        <span className="text-xs text-slate-500">{new Date(mission.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <h4 className="font-bold text-white mb-1 line-clamp-1 group-hover:text-amber-300 transition-colors">{mission.title}</h4>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className={mission.type === 'paid' ? 'text-emerald-400 font-medium' : 'text-blue-400 font-medium'}>{mission.budget}</span>
+                                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-white" />
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className={`font-bold uppercase ${getFrequencyColor(signal.frequency).split(' ')[0]}`}>Freq: {signal.frequency}</div>
-                                    <div className="text-zinc-600">T-Stamp: {new Date(signal.created_at).toLocaleTimeString([], {hour12:false})}</div>
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="mb-4 font-sans text-sm md:text-base text-zinc-200 leading-relaxed whitespace-pre-wrap border-l-4 border-zinc-800 pl-4 group-hover:border-cyan-700/50 transition-colors">
-                                {renderText(signal)}
-                            </div>
-
-                            {/* Footer Data/Controls */}
-                            <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 pt-2">
-                                <button onClick={(e) => handleSendSignal(e, signal.id)} className={`flex items-center gap-2 px-2 py-1 border border-transparent hover:border-zinc-700 hover:bg-zinc-900 transition-all ${signal.likes?.some((l:any) => l.user_id === user?.id) ? 'text-cyan-400' : ''}`}>
-                                    <Radio className="w-4 h-4" /> <span className="font-mono">SIG: {signal.likes?.length || 0}</span>
-                                </button>
-                                <button className="flex items-center gap-2 px-2 py-1 border border-transparent hover:border-zinc-700 hover:bg-zinc-900 transition-all">
-                                    <MessageSquare className="w-4 h-4" /> <span className="font-mono">COM: {signal.comments?.length || 0}</span>
-                                </button>
-                                <button onClick={(e) => handleTranslate(e, signal)} className="ml-auto px-2 py-1 border border-transparent hover:border-zinc-700 hover:bg-zinc-900 transition-all hover:text-cyan-400"><Globe className="w-4 h-4" /></button>
-                            </div>
+                            )) : <div className="text-center text-slate-500 py-10">No active missions in this sector.</div>}
                         </div>
-                    ))}
-                </div>
-            </div>
-        </main>
+                    )}
+                </motion.aside>
+            )}
+          </AnimatePresence>
+          {showRightPanel && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] md:hidden" onClick={() => setShowRightPanel(null)} />}
 
-        {/* SAĞ PANEL - GÖREVLER (DESKTOP) */}
-        <aside className="hidden lg:flex flex-col w-80 border-l-2 border-cyan-900/50 bg-black p-4 z-40 overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-cyan-900/30">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Briefcase className="w-4 h-4 text-cyan-400" /> Active Missions</h3>
-                <button onClick={() => setIsMissionModalOpen(true)} className="p-1.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-sm transition-all"><Plus className="w-4 h-4" /></button>
-            </div>
-            <div className="space-y-3">
-                {missions.map((mission) => (
-                    <div key={mission.id} onClick={() => setSelectedMission(mission)} className="bg-zinc-950 border-2 border-zinc-800 p-3 cursor-pointer hover:border-cyan-500 hover:bg-cyan-950/10 transition-all group">
-                        <div className="flex justify-between items-start mb-2 text-[9px] font-bold uppercase tracking-wider font-mono">
-                            <span className={`px-1.5 py-0.5 border ${mission.type === 'paid' ? 'text-emerald-400 border-emerald-400' : 'text-blue-400 border-blue-400'}`}>{mission.type}</span>
-                            <span className="text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <h4 className="font-bold text-xs text-white mb-2 line-clamp-1 group-hover:text-cyan-400">{mission.title}</h4>
-                        <div className="text-[10px] font-mono text-zinc-500 flex justify-between">
-                            <span className="text-cyan-600 font-bold">ALLOC: {mission.budget}</span>
-                             <ChevronRight className="w-3 h-3 text-zinc-700 group-hover:text-cyan-400" />
-                        </div>
-                    </div>
-                ))}
-                {missions.length === 0 && <div className="text-center text-zinc-700 text-xs py-10 font-mono uppercase border-2 border-dashed border-zinc-800">No Active Contracts Detected.</div>}
-            </div>
-        </aside>
       </div>
 
-      {/* MOBILE ACTION BUTTON */}
-      <button onClick={() => setIsWriting(true)} className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-cyan-500 text-black flex items-center justify-center shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 transition-all border-2 border-cyan-400">
-          <Zap className="w-6 h-6" />
-      </button>
-
       <AnimatePresence>
-        {/* WRITE MODAL (Original Component, just needs theme context) */}
-        <WriteModal isOpen={isWriting} onClose={() => setIsWriting(false)} messageText={messageText} setMessageText={setMessageText} onBroadcast={handleBroadcast} isSending={isSending} selectedFreq={selectedFreq} setSelectedFreq={setSelectedFreq} />
-        
-        {/* SIGNAL DETAIL MODAL (Terminal Style) */}
-        {selectedSignal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedSignal(null)}>
-                <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-2xl bg-black border-2 border-cyan-500/50 flex flex-col max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
-                    <div className="absolute inset-0 pointer-events-none bg-[url('/grid.png')] opacity-10"></div>
-                    <div className="p-4 border-b-2 border-cyan-900/50 flex justify-between items-center bg-cyan-950/20">
-                        <div className="font-mono text-xs text-cyan-400 font-bold uppercase tracking-wider">Reading Signal Data...</div>
-                        <button onClick={() => setSelectedSignal(null)} className="p-1 hover:bg-cyan-950/50 border border-transparent hover:border-cyan-500/50 text-cyan-400 transition-all"><X className="w-5 h-5" /></button>
+        {/* WRITE MODAL (Güncellenmiş Stil) */}
+        {isWriting && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0f0f25] border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-white">Broadcast Signal</h3>
+                        <button onClick={() => setIsWriting(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-black relative z-10">
-                        <div className="flex gap-4 mb-6 pb-4 border-b border-zinc-900 font-mono text-xs">
-                            <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center font-bold text-zinc-400 text-lg shrink-0">{selectedSignal.author.slice(0,2).toUpperCase()}</div>
-                            <div className="flex-1">
-                                <div className="font-bold text-white text-base">USER: {selectedSignal.author.toUpperCase()}</div>
-                                <div className="text-zinc-500 mt-1">FREQ: <span className={getFrequencyColor(selectedSignal.frequency).split(' ')[0]}>{selectedSignal.frequency.toUpperCase()}</span> | TIME: {new Date(selectedSignal.created_at).toLocaleString()}</div>
-                            </div>
-                             <button onClick={(e) => handleTranslate(e, selectedSignal)} className="h-8 px-3 border border-zinc-700 hover:border-cyan-400 hover:text-cyan-400 text-zinc-500 transition-all flex items-center gap-2"><Globe className="w-4 h-4" /> TRNSL</button>
+                    
+                    <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
+                        {FREQUENCIES.map(freq => (
+                            <button key={freq.id} onClick={() => setSelectedFreq(freq)} className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${selectedFreq.id === freq.id ? getFrequencyStyle(freq.id) : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}>
+                                {freq.name}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    <textarea value={messageText} onChange={e => setMessageText(e.target.value)} placeholder="What message do you send to the void?" className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-slate-500 resize-none outline-none focus:border-indigo-500/50 transition-all mb-6" />
+                    
+                    <button onClick={handleBroadcast} disabled={isSending || !messageText.trim()} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:hover:bg-indigo-600 shadow-lg shadow-indigo-500/20">
+                        {isSending ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Send className="w-5 h-5" /> Transmit Signal</>}
+                    </button>
+                </motion.div>
+            </motion.div>
+        )}
+        
+        {/* MISSION MODALS (Aynı mantık, yeni stil) */}
+        {isMissionModalOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-[#0f0f25] border border-white/10 rounded-3xl p-6 space-y-5 relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                    <div className="flex justify-between items-center"><h3 className="font-bold text-xl text-white">New Mission Brief</h3><button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5" /></button></div>
+                    <input placeholder="Mission Title" value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" />
+                    <div className="flex gap-3"><select className="bg-white/5 p-4 rounded-xl flex-1 border border-white/10 outline-none text-white appearance-none focus:border-amber-500/50 transition-all" onChange={e => setNewMission({...newMission, type: e.target.value as any})}><option value="partner" className="bg-[#0f0f25]">Partner</option><option value="paid" className="bg-[#0f0f25]">Paid</option></select><input placeholder="Budget / Equity" className="bg-white/5 p-4 rounded-xl flex-1 border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, budget: e.target.value})} /></div>
+                    <textarea placeholder="Mission Description..." className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none h-32 resize-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, description: e.target.value})} />
+                    <input placeholder="Contact Email (Secure)" className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, contact_email: e.target.value})} />
+                    <button onClick={handleCreateMission} disabled={isPostingMission} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:scale-[1.02] transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50">{isPostingMission ? "Publishing..." : "Publish Mission"}</button>
+                </div>
+            </motion.div>
+        )}
+
+        {selectedMission && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setSelectedMission(null)}>
+                <div className="w-full max-w-lg bg-[#0f0f25] border border-white/10 rounded-3xl p-8 relative shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <button className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedMission(null)}><X className="w-5 h-5" /></button>
+                    <span className={`text-xs font-bold uppercase tracking-widest mb-3 block ${selectedMission.type === 'paid' ? 'text-emerald-400' : 'text-blue-400'}`}>{selectedMission.type === 'paid' ? 'PAID OPPORTUNITY' : 'PARTNER REQUEST'}</span>
+                    <h2 className="text-2xl font-bold mb-2 text-white">{selectedMission.title}</h2>
+                    <div className="text-amber-400 font-medium mb-6">{selectedMission.budget}</div>
+                    <p className="text-slate-300 leading-relaxed mb-8 whitespace-pre-wrap">{selectedMission.description}</p>
+                    <div className="bg-white/5 p-5 rounded-2xl border border-white/10">
+                        <div className="text-xs text-slate-500 font-bold uppercase mb-2">Contact Secure Link</div>
+                        <div className="text-white font-mono text-sm select-all">{selectedMission.contact_info}</div>
+                    </div>
+                </div>
+            </motion.div>
+        )}
+
+        {/* SIGNAL DETAIL MODAL (Yeni Stil) */}
+        {selectedSignal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setSelectedSignal(null)}>
+                <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-2xl bg-[#0f0f25] border border-white/10 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+                        <div className="flex items-center gap-4">
+                             <img src={selectedSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedSignal.author}`} className="w-12 h-12 rounded-full border-2 border-white/10" />
+                             <div>
+                                 <div className="font-bold text-white text-lg">@{selectedSignal.author}</div>
+                                 <div className={`text-xs font-bold uppercase tracking-wider ${getFrequencyStyle(selectedSignal.frequency).split(' ')[1]}`}>{selectedSignal.frequency} Sector</div>
+                             </div>
                         </div>
-                        <p className="text-lg leading-relaxed text-white mb-8 whitespace-pre-wrap font-sans pl-4 border-l-4 border-cyan-500/50">{renderText(selectedSignal)}</p>
+                        <button onClick={() => setSelectedSignal(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                        <p className="text-xl leading-relaxed text-white mb-10 whitespace-pre-wrap font-serif pl-4 border-l-4 border-indigo-500/50">"{renderText(selectedSignal)}"</p>
                         
-                        <div>
-                            <h4 className="text-xs font-bold text-cyan-600 uppercase tracking-widest mb-4 font-mono border-b border-zinc-900 pb-2">Comm Logs [{selectedSignal.comments?.length || 0}]</h4>
-                            <div className="space-y-4">
+                        <div className="border-t border-white/10 pt-8">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Signal Logs ({selectedSignal.comments?.length || 0})</h4>
+                            <div className="space-y-6">
                                 {selectedSignal.comments?.map(c => (
-                                    <div key={c.id} className="flex gap-3 font-mono text-xs pl-2 border-l-2 border-zinc-800">
-                                        <span className="font-bold text-cyan-400 shrink-0">[{c.author}]:</span>
-                                        <span className="text-zinc-300 font-sans">{c.content}</span>
+                                    <div key={c.id} className="flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shrink-0">{c.author?.[0]}</div>
+                                        <div>
+                                            <div className="text-sm font-bold text-white mb-1">@{c.author} <span className="text-slate-500 text-xs font-normal ml-2">{new Date(c.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
+                                            <p className="text-slate-300 leading-relaxed">{c.content}</p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </div>
-                    <div className="p-4 border-t-2 border-cyan-900/50 bg-black relative z-10 flex gap-2">
-                        <input value={commentText} onChange={e => setCommentText(e.target.value)} className="flex-1 bg-zinc-900 border-2 border-zinc-800 px-4 py-3 outline-none text-sm text-white font-mono focus:border-cyan-500 transition-all placeholder:text-zinc-700" placeholder="ENTER REPLY DATA..." onKeyDown={e => e.key === 'Enter' && handlePostComment(selectedSignal.id)} />
-                        <button onClick={() => handlePostComment(selectedSignal.id)} className="px-6 bg-cyan-500 text-black font-bold hover:bg-cyan-400 border-2 border-cyan-500 transition-all uppercase tracking-wider text-sm">SEND</button>
+                    <div className="p-4 border-t border-white/10 bg-white/5 flex gap-3">
+                        <input value={commentText} onChange={e => setCommentText(e.target.value)} className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 outline-none text-sm text-white focus:border-indigo-500/50 transition-all placeholder:text-slate-500" placeholder="Reply to signal..." onKeyDown={e => e.key === 'Enter' && handlePostComment(selectedSignal.id)} />
+                        <button onClick={() => handlePostComment(selectedSignal.id)} className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition-all shadow-lg shadow-indigo-500/20"><Send className="w-5 h-5" /></button>
                     </div>
                 </motion.div>
             </motion.div>
         )}
 
-        {/* MISSION MODALS (Terminal Style) */}
-        {isMissionModalOpen && (
-            <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 font-mono">
-                <div className="w-full max-w-md bg-black border-2 border-cyan-500 p-6 space-y-4 relative relative overflow-hidden">
-                     <div className="absolute inset-0 bg-[url('/grid.png')] opacity-10 pointer-events-none"></div>
-                     <div className="absolute top-0 left-0 w-full h-1 bg-cyan-500 animate-pulse"></div>
-                    <h3 className="font-bold text-xl text-cyan-400 uppercase tracking-wider mb-6 relative z-10">Initialize New Contract</h3>
-                    <div className="space-y-4 relative z-10">
-                        <input placeholder="PROTOCOL TITLE" value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-zinc-900 p-3 border-2 border-zinc-800 outline-none focus:border-cyan-500 text-white text-sm" />
-                        <div className="flex gap-2">
-                            <select className="bg-zinc-900 p-3 flex-1 border-2 border-zinc-800 outline-none focus:border-cyan-500 text-white text-sm appearance-none uppercase" onChange={e => setNewMission({...newMission, type: e.target.value as any})}><option value="partner" className="bg-black">TYPE: PARTNER</option><option value="paid" className="bg-black">TYPE: PAID BOUNTY</option></select>
-                            <input placeholder="ALLOCATION (BUDGET)" className="bg-zinc-900 p-3 flex-1 border-2 border-zinc-800 outline-none focus:border-cyan-500 text-white text-sm" onChange={e => setNewMission({...newMission, budget: e.target.value})} />
+        {/* DAILY QUESTION MODAL (Yeni Stil) */}
+         {isDailyOpen && dailyQuestion && (
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setIsDailyOpen(false)}>
+                <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-4xl max-h-[90vh] bg-[#0f0f25] border border-amber-500/30 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                    <div className="p-8 border-b border-white/5 bg-amber-900/10 shrink-0 relative">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2"><Star className="w-4 h-4 fill-current animate-pulse" /> Daily Reflection Topic</div>
+                            <button onClick={() => setIsDailyOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-6 h-6 text-white" /></button>
                         </div>
-                        <textarea placeholder="MISSION BRIEFING DETAILS..." className="w-full bg-zinc-900 p-3 border-2 border-zinc-800 outline-none focus:border-cyan-500 text-white text-sm h-32" onChange={e => setNewMission({...newMission, description: e.target.value})} />
-                        <input placeholder="SECURE COMMS CHANNEL (EMAIL)" className="w-full bg-zinc-900 p-3 border-2 border-zinc-800 outline-none focus:border-cyan-500 text-white text-sm" onChange={e => setNewMission({...newMission, contact_email: e.target.value})} />
+                        <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight italic text-center py-4">"{dailyQuestion.content}"</h2>
                     </div>
-                    <div className="flex gap-2 pt-4 relative z-10">
-                        <button onClick={() => setIsMissionModalOpen(false)} className="flex-1 py-3 border-2 border-zinc-700 text-zinc-500 hover:text-white hover:border-white transition-all uppercase font-bold text-sm">ABORT</button>
-                        <button onClick={handleCreateMission} className="flex-1 py-3 bg-cyan-500 text-black font-bold border-2 border-cyan-500 hover:bg-cyan-400 transition-all uppercase tracking-wider text-sm">{isPostingMission ? "PROCESSING..." : "DEPLOY CONTRACT"}</button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {selectedMission && (
-            <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 font-mono" onClick={() => setSelectedMission(null)}>
-                <div className="w-full max-w-lg bg-black border-2 border-cyan-500 p-8 relative shadow-[0_0_50px_-10px_rgba(6,182,212,0.3)]" onClick={e => e.stopPropagation()}>
-                    <button className="absolute top-4 right-4 text-zinc-500 hover:text-red-500 transition-colors" onClick={() => setSelectedMission(null)}><X className="w-6 h-6" /></button>
-                    <span className={`text-xs font-bold uppercase tracking-[0.2em] mb-2 block ${selectedMission.type === 'paid' ? 'text-emerald-400' : 'text-blue-400'}`}>CONTRACT TYPE: {selectedMission.type}</span>
-                    <h2 className="text-2xl font-bold mb-6 text-white uppercase border-b-2 border-zinc-800 pb-4">{selectedMission.title}</h2>
-                    <div className="mb-6">
-                         <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold mb-2">Briefing</div>
-                        <p className="text-zinc-300 leading-relaxed font-sans border-l-4 border-cyan-900 pl-4">{selectedMission.description}</p>
-                    </div>
-                    <div className="flex gap-4 mb-6 text-xs">
-                        <div className="flex-1 bg-zinc-900 p-3 border-2 border-zinc-800"><div className="text-zinc-600 font-bold mb-1">ALLOCATION</div><div className="text-cyan-400 font-bold">{selectedMission.budget}</div></div>
-                        <div className="flex-1 bg-zinc-900 p-3 border-2 border-zinc-800"><div className="text-zinc-600 font-bold mb-1">DATE TIMESTAMP</div><div className="text-white">{new Date(selectedMission.created_at).toLocaleDateString()}</div></div>
-                    </div>
-                    <div className="bg-cyan-950/20 p-4 border-2 border-cyan-900/50 font-mono text-sm break-all text-cyan-300">
-                        <div className="text-[10px] text-cyan-600 uppercase tracking-widest font-bold mb-2 flex items-center gap-2"><Zap className="w-3 h-3" /> Secure Comms Link</div>
-                        {selectedMission.contact_info}
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* MOBILE MISSION LIST & DAILY MODAL (Basitleştirilmiş Terminal Stili) */}
-        {(isMissionListOpen || isDailyOpen) && (
-            <div className="fixed inset-0 z-[150] bg-black/95 p-4 md:hidden overflow-y-auto font-mono">
-                <div className="flex justify-end"><button onClick={() => {setIsMissionListOpen(false); setIsDailyOpen(false)}} className="p-2 border-2 border-zinc-800 text-zinc-500"><X className="w-6 h-6" /></button></div>
-                
-                {isMissionListOpen && (
-                    <div className="mt-8 space-y-4">
-                        <h2 className="text-xl font-bold text-cyan-400 uppercase tracking-wider border-b-2 border-cyan-900 pb-4 mb-6">Active Contracts</h2>
-                         {missions.map((mission) => (
-                            <div key={mission.id} onClick={() => {setSelectedMission(mission); setIsMissionListOpen(false)}} className="bg-zinc-900 border-2 border-zinc-800 p-4 cursor-pointer active:bg-cyan-950/30 active:border-cyan-500 transition-all">
-                                <div className="flex justify-between text-[10px] font-bold uppercase mb-2"><span className={mission.type==='paid'?'text-emerald-400':'text-blue-400'}>{mission.type}</span><span className="text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span></div>
-                                <h4 className="font-bold text-white">{mission.title}</h4>
-                                <div className="text-xs text-cyan-600 mt-2 font-bold">{mission.budget}</div>
-                            </div>
-                        ))}
-                        <button onClick={() => {setIsMissionModalOpen(true); setIsMissionListOpen(false)}} className="w-full py-4 border-2 border-dashed border-zinc-700 text-zinc-500 uppercase font-bold tracking-wider hover:text-cyan-400 hover:border-cyan-400 transition-all">+ INITIALIZE NEW CONTRACT</button>
-                    </div>
-                )}
-
-                 {isDailyOpen && dailyQuestion && (
-                    <div className="mt-8">
-                        <h2 className="text-lg font-bold text-white uppercase tracking-wider border-b-2 border-cyan-900 pb-4 mb-6">Daily Intercept Log</h2>
-                        <div className="text-xl font-serif italic text-cyan-100 mb-8 p-4 bg-cyan-950/20 border-l-4 border-cyan-500">"{dailyQuestion.content}"</div>
-                        <div className="space-y-4 mb-8 max-h-[40vh] overflow-y-auto">
-                             {dailyResponses.map((res) => (
-                                <div key={res.id} className="text-sm border-l-2 border-zinc-800 pl-4 py-2"><div className="font-bold text-zinc-500 mb-1">[{res.author}]</div><p className="text-zinc-300 font-sans">{res.content}</p></div>
-                            ))}
-                        </div>
-                        <div className="flex gap-2">
-                             <input value={dailyResponseText} onChange={e => setDailyResponseText(e.target.value)} className="flex-1 bg-zinc-900 border-2 border-zinc-800 px-4 py-3 outline-none text-sm text-white font-mono focus:border-cyan-500 transition-all" placeholder="ENTER TRANSMISSION..." />
-                             <button onClick={handleDailyResponse} className="px-4 bg-cyan-500 text-black font-bold border-2 border-cyan-500">SEND</button>
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-black/20">
+                        <div className="space-y-4">
+                            {dailyResponses.length > 0 ? dailyResponses.map((response) => (
+                                <div key={response.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-8 h-8 rounded-full border border-white/10" />
+                                        <div className="text-sm font-bold text-white">@{response.author}</div>
+                                    </div>
+                                    <p className="text-slate-200 text-base leading-relaxed font-serif pl-11 border-l-2 border-amber-500/30">"{renderText(response)}"</p>
+                                </div>
+                            )) : <div className="text-center py-20 opacity-50 text-sm uppercase tracking-widest">No reflections yet. Be the first light.</div>}
                         </div>
                     </div>
-                )}
-            </div>
+                    <div className="p-6 bg-white/5 border-t border-white/5 shrink-0 flex gap-3">
+                         <input type="text" value={dailyResponseText} onChange={(e) => setDailyResponseText(e.target.value)} placeholder="Share your reflection..." className="flex-1 bg-white/5 border border-white/10 rounded-full px-6 py-4 text-sm text-white outline-none focus:border-amber-500/50 transition-all" onKeyDown={(e) => e.key === 'Enter' && handleDailyResponse()} />
+                         <button onClick={handleDailyResponse} disabled={isSending || !dailyResponseText.trim()} className="px-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-full hover:scale-105 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:hover:scale-100"><Send className="w-5 h-5" /></button>
+                    </div>
+                </motion.div>
+             </motion.div>
         )}
 
       </AnimatePresence>
