@@ -1,17 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
-  MessageSquare, User, CornerDownRight, LogIn, LogOut, Search, Plus, 
-  Sparkles, Globe, Briefcase, Radio, Compass, LayoutTemplate,
-  ChevronRight, X, Star, Send, Feather, Bell
+  Radio, X, MessageSquare, Send, 
+  ChevronLeft, ChevronRight, RefreshCw, User, CornerDownRight, ChevronDown, 
+  LogIn, LogOut, Search, LayoutGrid, Layers, Plus, Reply, Sparkles, Globe, 
+  Briefcase, DollarSign, Calendar, Mail, Maximize2, AtSign, Video, Instagram, 
+  List, Grid, Podcast
 } from "lucide-react";
 
+import LavaBackground from '@/components/LavaBackground';
 import ProfileSetup from '@/components/ProfileSetup';
+
+// --- AYRILMIŞ BİLEŞENLER VE TİPLER ---
 import { SignalData, MissionData, FREQUENCIES } from "@/types";
+import SignalCard from "@/components/lighthouse/SignalCard";
 import WriteModal from "@/components/modals/WriteModal";
 
 // --- YARDIMCI FONKSİYONLAR ---
@@ -20,60 +26,61 @@ const translateText = async (text: string) => {
     try {
         const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=Autodetect|en`);
         const data = await response.json();
-        return (data.responseStatus !== 200 || data.responseData.translatedText.includes("SELECT TWO DISTINCT LANGUAGES")) ? text : data.responseData.translatedText;
-    } catch (error) { return text; }
-};
-
-// Yeni Tema Renkleri (Altın/Amber vurgulu)
-const getFrequencyStyle = (freqId: string) => {
-    const styles: {[key: string]: string} = {
-        'general': 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20',
-        'tech': 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-        'art': 'bg-purple-500/10 text-purple-300 border-purple-500/20',
-        'science': 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
-        'philosophy': 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-        'music': 'bg-pink-500/10 text-pink-300 border-pink-500/20',
-        'business': 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-    };
-    return styles[freqId] || 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20';
+        if (data.responseStatus !== 200 || data.responseData.translatedText.includes("SELECT TWO DISTINCT LANGUAGES")) {
+            return text;
+        }
+        return data.responseData.translatedText;
+    } catch (error) {
+        return text;
+    }
 };
 
 export default function LighthousePage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // STATE
+  // --- STATE ---
   const [signals, setSignals] = useState<SignalData[]>([]);
   const [dailyQuestion, setDailyQuestion] = useState<any>(null);
   const [dailyResponses, setDailyResponses] = useState<SignalData[]>([]);
   const [missions, setMissions] = useState<MissionData[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [showSetup, setShowSetup] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'stack' | 'log'>('stack'); 
+  const [missionViewMode, setMissionViewMode] = useState<'cards' | 'list'>('cards');
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterFreq, setFilterFreq] = useState("all");
   const [isGlobalEnglish, setIsGlobalEnglish] = useState(false);
   const [translatedIDs, setTranslatedIDs] = useState<{[key: number]: boolean}>({});
-  const [notifications, setNotifications] = useState<any[]>([]);
 
-  // UI State
-  const [isWriting, setIsWriting] = useState(false);
-  const [selectedSignal, setSelectedSignal] = useState<SignalData | null>(null);
-  const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
   const [isDailyOpen, setIsDailyOpen] = useState(false);
-  const [showRightPanel, setShowRightPanel] = useState<'missions' | 'notifications' | null>(null); // Yeni sağ panel kontrolü
+  const [isMissionModalOpen, setIsMissionModalOpen] = useState(false);
+  const [isMissionListOpen, setIsMissionListOpen] = useState(false);
+  const [selectedMission, setSelectedMission] = useState<MissionData | null>(null);
+  const [expandedBrief, setExpandedBrief] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isWriting, setIsWriting] = useState(false);
 
-  // Form State
   const [selectedFreq, setSelectedFreq] = useState(FREQUENCIES[1]);
   const [messageText, setMessageText] = useState("");
-  const [commentText, setCommentText] = useState("");
-  const [dailyResponseText, setDailyResponseText] = useState("");
+  const [dailyResponseText, setDailyResponseText] = useState(""); 
   const [isSending, setIsSending] = useState(false);
-  const [newMission, setNewMission] = useState({ title: '', type: 'partner' as 'partner' | 'paid', description: '', budget: '', contact_email: '', contact_skype: '', contact_insta: '' });
+  const [commentText, setCommentText] = useState("");
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [newMission, setNewMission] = useState({ 
+      title: '', type: 'partner' as 'partner' | 'paid', description: '', budget: '', 
+      contact_email: '', contact_skype: '', contact_insta: '' 
+  });
   const [isPostingMission, setIsPostingMission] = useState(false);
 
-  // --- FETCHING & EFFECTS ---
+  // --- EFFECTLER ---
   useEffect(() => {
     const checkUser = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -89,9 +96,8 @@ export default function LighthousePage() {
     return () => { authListener.subscription.unsubscribe(); };
   }, []);
 
-  useEffect(() => { fetchSignals(); }, [filterFreq]);
+  useEffect(() => { setCurrentIndex(0); fetchSignals(); }, [filterFreq]);
 
-  // Realtime & Translate (Kısaltılmış)
   useEffect(() => {
       if (isGlobalEnglish && signals.length > 0) {
           const translateMissing = async () => {
@@ -110,28 +116,44 @@ export default function LighthousePage() {
 
   useEffect(() => {
     const channel = supabase.channel('realtime-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'signals' }, () => { fetchSignals(); if(dailyQuestion && isDailyOpen) fetchDailyResponses(dailyQuestion.id) })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'signals' }, () => { fetchSignals(); if (dailyQuestion && isDailyOpen) fetchDailyResponses(dailyQuestion.id); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, () => fetchSignals())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+          if (profile && payload.new.reply_to === profile.username && payload.new.author !== profile.username) {
+             addNotification(`Log update: @${payload.new.author} replied to you! 💬`);
+          }
+          fetchSignals();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes' }, (payload) => { handleNewLikeNotification(payload.new); fetchSignals(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [isDailyOpen, dailyQuestion]);
+  }, [profile, isDailyOpen, dailyQuestion]);
 
-  // --- ACTIONS ---
+  // --- FONKSİYONLAR ---
+  const addNotification = (message: string) => {
+      const newNotif = { id: Date.now(), message };
+      setNotifications(prev => [newNotif, ...prev]);
+      setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== newNotif.id)), 6000);
+  };
+
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) { setProfile(data); if (!data.is_setup_complete) setShowSetup(true); }
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (!error && data) { setProfile(data); if (!data.is_setup_complete) setShowSetup(true); }
   };
 
   const fetchSignals = async () => {
     if (signals.length === 0) setIsLoading(true);
     let query = supabase.from('signals').select('*, comments(*), likes(*)').order('created_at', { ascending: false });
     if (filterFreq !== 'all') query = query.eq('frequency', filterFreq);
-    const { data } = await query;
+    const { data, error } = await query;
 
-    if (data) {
+    if (!error && data) {
         const enrichedData = await Promise.all(data.map(async (sig) => {
             const { data: p } = await supabase.from('profiles').select('avatar_url, country, occupation').eq('username', sig.author).maybeSingle();
-            return { ...sig, author_avatar: p?.avatar_url, author_country: p?.country || sig.distance, author_occupation: p?.occupation || sig.role, comments: sig.comments ? sig.comments.sort((a:any, b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) : [] };
+            return { 
+                ...sig, author_avatar: p?.avatar_url, author_country: p?.country || sig.distance, author_occupation: p?.occupation || sig.role,
+                comments: sig.comments ? sig.comments.sort((a:any, b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) : []
+            };
         }));
         setSignals(enrichedData);
     }
@@ -140,14 +162,15 @@ export default function LighthousePage() {
     const { data: missionData } = await supabase.from('missions').select('*').order('created_at', { ascending: false });
     if (missionData) {
         const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        setMissions(missionData.filter((m: any) => new Date(m.created_at) > oneWeekAgo) as MissionData[]);
+        const activeMissions = missionData.filter((m: any) => new Date(m.created_at) > oneWeekAgo);
+        setMissions(activeMissions as MissionData[]);
     }
     setIsLoading(false);
   };
-  
+
   const fetchDailyResponses = async (questionId: number) => {
-      const { data } = await supabase.from('signals').select('*, comments(*), likes(*)').eq('daily_question_id', questionId).order('created_at', { ascending: false });
-      if (data) {
+      const { data, error } = await supabase.from('signals').select('*, comments(*), likes(*)').eq('daily_question_id', questionId).order('created_at', { ascending: false });
+      if (!error && data) {
         const enrichedData = await Promise.all(data.map(async (sig) => {
             const { data: p } = await supabase.from('profiles').select('avatar_url, country, occupation').eq('username', sig.author).maybeSingle();
             return { ...sig, author_avatar: p?.avatar_url, author_country: p?.country || sig.distance, author_occupation: p?.occupation || sig.role, comments: sig.comments ? sig.comments.sort((a:any, b:any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) : [] };
@@ -163,6 +186,15 @@ export default function LighthousePage() {
     if (existing) await supabase.from('likes').delete().eq('id', existing.id);
     else await supabase.from('likes').insert({ user_id: user.id, signal_id: signalId });
     await fetchSignals(); 
+    if (dailyQuestion && isDailyOpen) fetchDailyResponses(dailyQuestion.id);
+  };
+
+  const handleNewLikeNotification = async (likeData: any) => {
+    const { data: signalOwner } = await supabase.from('signals').select('author').eq('id', likeData.signal_id).single();
+    if (signalOwner && signalOwner.author === profile?.username && likeData.user_id !== user?.id) {
+        const { data: sender } = await supabase.from('profiles').select('country').eq('id', likeData.user_id).single();
+        addNotification(`New signal from ${sender?.country || 'Unknown Sector'}! 📡`);
+    }
   };
 
   const handleTranslate = async (e: React.MouseEvent, signal: any) => {
@@ -172,6 +204,7 @@ export default function LighthousePage() {
       const translatedText = await translateText(signal.content);
       const updateList = (list: any[]) => list.map(s => s.id === signal.id ? { ...s, translation: translatedText } : s);
       setSignals(prev => updateList(prev));
+      setDailyResponses(prev => updateList(prev));
       setTranslatedIDs(prev => ({ ...prev, [signal.id]: true }));
   };
 
@@ -179,338 +212,679 @@ export default function LighthousePage() {
     if (!messageText.trim() || !user) return;
     setIsSending(true);
     const translated = await translateText(messageText);
-    await supabase.from('signals').insert({
+    const { error } = await supabase.from('signals').insert({
         content: messageText, translation: translated, frequency: selectedFreq.id,
         author: profile?.username || user.user_metadata.full_name, role: profile?.occupation || 'Explorer', distance: profile?.country || 'Near Orbit'
     });
-    setMessageText(""); setIsWriting(false); await fetchSignals(); setIsSending(false);
+    if (!error) { setMessageText(""); setIsWriting(false); setCurrentIndex(0); await fetchSignals(); }
+    setIsSending(false);
   };
-  
+
   const handleDailyResponse = async () => {
     if (!dailyResponseText.trim() || !user || !dailyQuestion) return;
     setIsSending(true);
-    await supabase.from('signals').insert({
-        content: dailyResponseText, frequency: 'general', author: profile?.username || user.user_metadata.full_name,
-        role: profile?.occupation || 'Explorer', daily_question_id: dailyQuestion.id
+    const translated = await translateText(dailyResponseText);
+    const { error } = await supabase.from('signals').insert({
+        content: dailyResponseText, translation: translated, frequency: 'general', author: profile?.username || user.user_metadata.full_name,
+        role: profile?.occupation || 'Explorer', distance: profile?.country || 'Near Orbit', daily_question_id: dailyQuestion.id
     });
-    setDailyResponseText(""); await fetchDailyResponses(dailyQuestion.id); setIsSending(false);
+    if (!error) { setDailyResponseText(""); await fetchDailyResponses(dailyQuestion.id); }
+    setIsSending(false);
   };
 
   const handlePostComment = async (signalId: number) => {
       if (!commentText.trim() || !user) return;
-      await supabase.from('comments').insert({ signal_id: signalId, content: commentText, author: profile?.username || user.user_metadata.full_name });
-      setCommentText(""); await fetchSignals();
-      if(selectedSignal) {
-         const updated = { ...selectedSignal, comments: [...(selectedSignal.comments || []), { id: Date.now(), content: commentText, author: profile?.username, created_at: new Date().toISOString() }] };
-         setSelectedSignal(updated as any);
-      }
+      setIsPostingComment(true);
+      const { error } = await supabase.from('comments').insert({ signal_id: signalId, content: commentText, author: profile?.username || user.user_metadata.full_name, reply_to: replyingTo });
+      if (!error) { setCommentText(""); setReplyingTo(null); await fetchSignals(); setShowAllComments(true); if (dailyQuestion && isDailyOpen) fetchDailyResponses(dailyQuestion.id); }
+      setIsPostingComment(false);
   };
 
   const handleCreateMission = async () => {
       if (!user || !newMission.contact_email) return alert("Email is required.");
       setIsPostingMission(true);
       const contactInfoJSON = JSON.stringify({ email: newMission.contact_email, skype: newMission.contact_skype, instagram: newMission.contact_insta });
-      await supabase.from('missions').insert({ title: newMission.title, type: newMission.type, description: newMission.description, budget: newMission.budget, contact_info: contactInfoJSON, user_id: user.id });
-      setNewMission({ title: '', type: 'partner', description: '', budget: '', contact_email: '', contact_skype: '', contact_insta: '' }); setIsMissionModalOpen(false); await fetchSignals(); setIsPostingMission(false);
+      const { error } = await supabase.from('missions').insert({ title: newMission.title, type: newMission.type, description: newMission.description, budget: newMission.budget, contact_info: contactInfoJSON, user_id: user.id });
+      if (!error) { setNewMission({ title: '', type: 'partner', description: '', budget: '', contact_email: '', contact_skype: '', contact_insta: '' }); setIsMissionModalOpen(false); await fetchSignals(); }
+      setIsPostingMission(false);
+  };
+
+  const initiateReply = (username: string) => { setReplyingTo(username); if (inputRef.current) inputRef.current.focus(); };
+
+  const renderContactInfo = (contactInfoStr: string) => {
+      try {
+          const contact = JSON.parse(contactInfoStr);
+          return (
+              <div className="flex flex-col gap-2">
+                  {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm text-white hover:text-emerald-400 transition-colors truncate"><AtSign className="w-4 h-4 text-emerald-400 shrink-0" /> <span className="truncate">{contact.email}</span></a>}
+                  {contact.skype && <a href={`skype:${contact.skype}?chat`} className="flex items-center gap-2 text-sm text-white hover:text-blue-400 transition-colors truncate"><Video className="w-4 h-4 text-blue-400 shrink-0" /> <span className="truncate">{contact.skype}</span></a>}
+                  {contact.instagram && <a href={`https://instagram.com/${contact.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white hover:text-pink-400 transition-colors truncate"><Instagram className="w-4 h-4 text-pink-400 shrink-0" /> <span className="truncate">@{contact.instagram.replace('@', '')}</span></a>}
+              </div>
+          );
+      } catch (e) { return <div className="text-sm text-white font-mono select-all cursor-pointer break-all">{contactInfoStr}</div>; }
+  };
+  
+  const getFrequencyColor = (freqId: string) => {
+    const freq = FREQUENCIES.find(f => f.id === freqId);
+    return freq ? `text-[${freq.color.replace('bg-', '')}] border-[${freq.color.replace('bg-', '')}]/50` : 'text-zinc-400 border-white/10';
+  };
+
+  const renderText = (signal: SignalData) => {
+      if ((isGlobalEnglish || translatedIDs[signal.id]) && signal.translation) return signal.translation;
+      return signal.content;
   };
 
   const filteredSignals = signals.filter(s => s.content.toLowerCase().includes(searchQuery.toLowerCase()) || s.author.toLowerCase().includes(searchQuery.toLowerCase()) || (s.translation && s.translation.toLowerCase().includes(searchQuery.toLowerCase())));
+  const nextSignal = () => setCurrentIndex((prev) => (prev + 1) % filteredSignals.length);
+  const prevSignal = () => setCurrentIndex((prev) => (prev - 1 + filteredSignals.length) % filteredSignals.length);
+  const currentSignal = filteredSignals.length > 0 ? filteredSignals[currentIndex] : null;
 
-  // --- RENDER ---
+  const handleDragEnd = (event: any, info: PanInfo) => { if (info.offset.x < -100) nextSignal(); else if (info.offset.x > 100) prevSignal(); };
+  
+  // DÜZELTİLMİŞ KART STİLİ (Üst üste binme sorunu çözüldü)
+  const getCardStyle = (index: number) => {
+    const total = filteredSignals.length;
+    let dist = (index - currentIndex + total) % total;
+    if (dist > total / 2) dist -= total;
+    
+    // Aktif Kart (Ortada, tam görünür)
+    if (dist === 0) return { zIndex: 30, x: 0, scale: 1, opacity: 1, filter: "blur(0px)", display: "block" };
+    
+    // Sağdaki Kart (İyice sağa, flu)
+    if (dist === 1) return { zIndex: 20, x: 350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
+    
+    // Soldaki Kart (İyice sola, flu)
+    if (dist === -1) return { zIndex: 20, x: -350, scale: 0.85, opacity: 0.5, filter: "blur(4px)", display: "block" };
+    
+    // Diğerleri gizli
+    return { zIndex: -1, x: 0, opacity: 0, display: "none" };
+  };
+
   return (
-    <div className="relative min-h-screen w-full font-sans selection:bg-indigo-500/30">
-      <div className="stars-bg"></div>
-      <div className="nebula-glow"></div>
+    <div className="relative h-screen w-full bg-black text-white font-sans overflow-hidden selection:bg-white/20">
+      <LavaBackground />
       {showSetup && user && ( <ProfileSetup userId={user.id} onComplete={() => { setShowSetup(false); fetchProfile(user.id); }} /> )}
 
-      {/* HEADER - Minimalist ve Zarif */}
-      <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 flex justify-between items-center bg-black/20 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.location.reload()}>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                <Compass className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-lg font-bold tracking-tight text-white">The Last Penguin</h1>
-        </div>
+      <div className="fixed top-24 right-8 z-[100] flex flex-col gap-3 pointer-events-none">
+        <AnimatePresence>
+          {notifications.map((notif) => (
+            <motion.div key={notif.id} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              <span className="text-xs font-bold text-blue-100">{notif.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
-        <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 focus-within:border-white/30 transition-all">
-                <Search className="w-4 h-4 text-slate-400 mr-2" />
-                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search frequency..." className="bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 w-40 lg:w-56" />
+      {/* 1. BLOK: HEADER & KATEGORİ MENÜSÜ */}
+      <header className={`fixed top-0 left-0 right-0 z-50 p-4 md:p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center transition-all duration-500 gap-4 bg-gradient-to-b from-black/80 to-transparent ${isWriting || showSetup ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+            <div className="flex flex-col cursor-pointer" onClick={() => window.location.reload()}>
+                <h1 className="text-lg md:text-2xl font-bold tracking-tighter mix-blend-difference text-white">The Last Penguin</h1>
+                <span className="text-[7px] md:text-[9px] uppercase tracking-[0.2em] text-zinc-500 mt-0.5">Frequency Scanner v1.0</span>
             </div>
-            
+            <div className="flex md:hidden items-center gap-2">
+                 <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 bg-white/10 border-white/10'}`}><Globe className="w-4 h-4" /></button>
+                 <button onClick={() => setIsMissionListOpen(true)} className="p-2 rounded-full bg-white/10 border border-white/10 text-emerald-400"><Briefcase className="w-4 h-4" /></button>
+            </div>
+        </div>
+        <div className="hidden md:flex items-center gap-3 lg:gap-4">
+            <div className="flex bg-white/5 border border-white/10 p-0.5 rounded-xl">
+                <button onClick={() => setViewMode('stack')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setViewMode('log')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            </div>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-1.5 gap-2 focus-within:border-blue-500/50 transition-all">
+                <Search className="w-3 h-3 text-zinc-500" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Scan..." className="bg-transparent border-none outline-none text-[11px] w-20 lg:w-32 text-white" />
+            </div>
             {user ? (
-                <div className="flex items-center gap-3">
-                    <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-2 rounded-full transition-all ${isGlobalEnglish ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}><Globe className="w-5 h-5" /></button>
-                    <div className="relative group">
-                        <img src={user.user_metadata.avatar_url} className="w-9 h-9 rounded-full border border-white/10 cursor-pointer group-hover:border-indigo-400 transition-all" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} />
-                        <div className="absolute right-0 mt-2 w-48 bg-[#0a0a20] border border-white/10 rounded-xl shadow-xl py-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-50">
-                            <button onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-white/5 flex items-center gap-2"><User className="w-4 h-4" /> Profile</button>
-                            <button onClick={() => supabase.auth.signOut()} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 flex items-center gap-2"><LogOut className="w-4 h-4" /> Log Out</button>
-                        </div>
-                    </div>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full backdrop-blur-md">
+                    <button onClick={() => setIsGlobalEnglish(!isGlobalEnglish)} className={`p-1 rounded-full border transition-all ${isGlobalEnglish ? 'bg-white text-black border-white' : 'text-zinc-400 border-white/10 hover:text-white'}`}><Globe className="w-3.5 h-3.5" /></button>
+                    <img src={user.user_metadata.avatar_url} className="w-6 h-6 rounded-full border border-white/20 cursor-pointer" onClick={() => router.push(`/profile/${encodeURIComponent(profile?.username || user.id)}`)} />
+                    <button onClick={() => supabase.auth.signOut()} className="p-1 hover:text-red-400 transition-colors"><LogOut className="w-3.5 h-3.5" /></button>
                 </div>
-            ) : (
-                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-bold transition-all backdrop-blur-md border border-white/10">Login</button>
+            ) : ( 
+                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="bg-white text-black px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase hover:scale-105 transition-transform">Login</button> 
             )}
         </div>
       </header>
 
-      {/* ANA YAPI - 3 Sütunlu Izgara (Grid) */}
-      <div className="pt-20 h-screen flex justify-center overflow-hidden relative z-10">
-          
-          {/* SOL KENAR ÇUBUĞU (Navigasyon) - Floating Dock Stili */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex flex-col items-center gap-4 p-4 z-50">
-              <div className="flex md:flex-col items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl">
-                  <button onClick={() => {setFilterFreq('all'); setShowRightPanel(null)}} className={`p-3 rounded-xl transition-all group relative ${filterFreq === 'all' ? 'bg-indigo-500/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                      <LayoutTemplate className="w-5 h-5" />
-                      <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none hidden md:block">All Signals</span>
-                  </button>
-                  {FREQUENCIES.slice(0, 3).map(freq => (
-                      <button key={freq.id} onClick={() => setFilterFreq(freq.id)} className={`p-3 rounded-xl transition-all group relative ${filterFreq === freq.id ? `bg-${freq.color.split('-')[1]}-500/20 text-white` : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                          <div className={`w-2.5 h-2.5 rounded-full ${freq.color} shadow-sm`}></div>
-                          <span className="absolute left-full ml-2 px-2 py-1 bg-black/80 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none hidden md:block">{freq.name}</span>
-                      </button>
-                  ))}
-                  <div className="w-px h-6 bg-white/10 md:w-6 md:h-px my-1"></div>
-                  <button onClick={() => setShowRightPanel(showRightPanel === 'missions' ? null : 'missions')} className={`p-3 rounded-xl transition-all group relative ${showRightPanel === 'missions' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                      <Briefcase className="w-5 h-5" />
-                       {missions.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-amber-400 rounded-full shadow-sm"></span>}
-                  </button>
+      {/* KATEGORİ MENÜSÜ (GÜNCELLENDİ) */}
+      <div className="fixed top-20 md:top-24 left-0 right-0 z-40 flex justify-center px-4 overflow-x-auto no-scrollbar py-2">
+        <div className="flex bg-black/60 backdrop-blur-xl border border-white/10 p-1 rounded-2xl gap-1">
+          {FREQUENCIES.map((freq) => (
+            <button
+              key={freq.id}
+              onClick={() => setFilterFreq(freq.id)}
+              className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all whitespace-nowrap ${
+                filterFreq === freq.id ? 'bg-white text-black shadow-lg' : 'text-zinc-500 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                {freq.id !== 'all' && ( <div className={`w-1 h-1 rounded-full ${freq.color}`} /> )}
+                {freq.name}
               </div>
-              
-              <button onClick={() => setIsWriting(true)} className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all md:mt-4">
-                  <Feather className="w-6 h-6" />
-              </button>
-          </div>
-
-          {/* ORTA SÜTUN - AKIŞ (FEED) */}
-          <main className="flex-1 max-w-2xl w-full h-full overflow-y-auto custom-scrollbar p-4 pb-32 md:pb-4 space-y-6 mask-image-b-fade">
-              
-              {/* Günlük Soru Kartı (Premium His) */}
-              {dailyQuestion && (
-                  <div onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }} className="relative overflow-hidden rounded-2xl cursor-pointer group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 backdrop-blur-xl border border-white/10 transition-all group-hover:border-amber-500/30"></div>
-                      <div className="relative p-6 flex flex-col items-center text-center z-10">
-                          <div className="flex items-center gap-2 text-amber-300 text-xs font-bold uppercase tracking-widest mb-3">
-                              <Star className="w-4 h-4 fill-current" /> Daily Reflection
-                          </div>
-                          <h2 className="text-xl md:text-2xl font-serif italic text-white mb-4 leading-relaxed">"{dailyQuestion.content}"</h2>
-                          <div className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 px-4 py-2 rounded-full">
-                              <Sparkles className="w-4 h-4" /> {dailyResponses.length} Explorers Responded
-                          </div>
-                      </div>
-                  </div>
-              )}
-
-              {/* Sinyal Kartları */}
-              {isLoading ? (
-                  <div className="flex justify-center py-20">
-                      <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                  </div>
-              ) : filteredSignals.map((signal) => (
-                  <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} key={signal.id} onClick={() => setSelectedSignal(signal)} className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer group relative overflow-hidden shadow-lg shadow-black/10">
-                      {/* Glow effect on hover */}
-                      <div className={`absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-transparent via-${getFrequencyColor(signal.frequency).split(' ')[1].replace('text-','')}-500/10 to-transparent pointer-events-none`}></div>
-                      
-                      <div className="flex items-start justify-between mb-4 relative z-10">
-                          <div className="flex items-center gap-3">
-                              <img src={signal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${signal.author}`} className="w-11 h-11 rounded-full border-2 border-white/5 group-hover:border-white/20 transition-colors" />
-                              <div>
-                                  <div className="flex items-center gap-2">
-                                      <span className="font-bold text-white text-[15px]">@{signal.author}</span>
-                                      {signal.role && <span className="text-[11px] bg-white/5 px-2 py-0.5 rounded-full text-slate-400">{signal.role}</span>}
-                                  </div>
-                                  <div className="text-xs text-slate-500 mt-0.5">{new Date(signal.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
-                              </div>
-                          </div>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${getFrequencyStyle(signal.frequency)}`}>{signal.frequency}</span>
-                      </div>
-                      
-                      <p className="text-slate-200 leading-relaxed whitespace-pre-wrap mb-5 pl-2 border-l-2 border-white/10 font-sans relative z-10">"{renderText(signal)}"</p>
-                      
-                      <div className="flex items-center gap-6 text-sm text-slate-400 relative z-10">
-                          <button onClick={(e) => handleSendSignal(e, signal.id)} className={`flex items-center gap-2 transition-colors ${signal.likes?.some((l:any) => l.user_id === user?.id) ? 'text-indigo-400' : 'hover:text-white'}`}>
-                              <Radio className="w-4 h-4" /> {signal.likes?.length || 0}
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-white transition-colors">
-                              <MessageSquare className="w-4 h-4" /> {signal.comments?.length || 0}
-                          </button>
-                          <button onClick={(e) => handleTranslate(e, signal)} className="ml-auto hover:text-white transition-colors p-1 bg-white/5 rounded-md"><Globe className="w-4 h-4" /></button>
-                      </div>
-                  </motion.div>
-              ))}
-          </main>
-
-          {/* SAĞ KAYAR PANEL (Mission & Notifications) */}
-          <AnimatePresence>
-            {showRightPanel && (
-                <motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-96 bg-[#0a0a20]/90 backdrop-blur-xl border-l border-white/10 z-[60] p-6 flex flex-col shadow-2xl">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-bold flex items-center gap-3">
-                            {showRightPanel === 'missions' ? <><Briefcase className="w-6 h-6 text-amber-400" /> Missions & Bounties</> : <>Notifications</>}
-                        </h2>
-                        <button onClick={() => setShowRightPanel(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-                    </div>
-
-                    {showRightPanel === 'missions' && (
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 -mr-2 pr-2">
-                            <button onClick={() => setIsMissionModalOpen(true)} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition-transform mb-4">
-                                <Plus className="w-5 h-5" /> Post New Mission
-                            </button>
-                            {missions.length > 0 ? missions.map((mission) => (
-                                <div key={mission.id} onClick={() => setSelectedMission(mission)} className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 hover:border-amber-500/30 transition-all cursor-pointer group">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type}</span>
-                                        <span className="text-xs text-slate-500">{new Date(mission.created_at).toLocaleDateString()}</span>
-                                    </div>
-                                    <h4 className="font-bold text-white mb-1 line-clamp-1 group-hover:text-amber-300 transition-colors">{mission.title}</h4>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className={mission.type === 'paid' ? 'text-emerald-400 font-medium' : 'text-blue-400 font-medium'}>{mission.budget}</span>
-                                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-white" />
-                                    </div>
-                                </div>
-                            )) : <div className="text-center text-slate-500 py-10">No active missions in this sector.</div>}
-                        </div>
-                    )}
-                </motion.aside>
-            )}
-          </AnimatePresence>
-          {showRightPanel && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] md:hidden" onClick={() => setShowRightPanel(null)} />}
-
+            </button>
+          ))}
+        </div>
       </div>
+      <main className={`relative z-10 w-full h-full pt-44 flex justify-center transition-all duration-700 ${isExpanded || isWriting || showSetup || isDailyOpen || isMissionModalOpen || isMissionListOpen || selectedMission ? 'scale-90 opacity-0 pointer-events-none blur-xl' : 'scale-100 opacity-100'}`}>
+        <div className="w-full max-w-2xl px-4 flex flex-col items-center mx-auto">
+            <div className="flex md:hidden w-full justify-end mb-4">
+                <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
+                    <button onClick={() => setViewMode('stack')} className={`p-2 rounded-lg transition-all ${viewMode === 'stack' ? 'bg-white text-black' : 'text-zinc-500'}`}><Layers className="w-4 h-4" /></button>
+                    <button onClick={() => setViewMode('log')} className={`p-2 rounded-lg transition-all ${viewMode === 'log' ? 'bg-white text-black' : 'text-zinc-500'}`}><LayoutGrid className="w-4 h-4" /></button>
+                </div>
+            </div>
+
+            {!isLoading && dailyQuestion && (
+                <motion.button initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative z-40 w-full max-w-xl mb-4 flex items-center justify-between p-3 px-5 rounded-full border bg-black/40 backdrop-blur-xl border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)] cursor-pointer hover:border-blue-500/40 transition-all touch-action-manipulation text-left" onClick={() => { if(dailyQuestion) { fetchDailyResponses(dailyQuestion.id); setIsDailyOpen(true); } }}>
+                    <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20"><Sparkles className="w-4 h-4 text-blue-400" /></div>
+                        <div className="overflow-hidden"><div className="text-[9px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none mb-1">Daily Frequency</div><div className="text-xs md:text-sm font-serif italic text-zinc-200 truncate">"{dailyQuestion.content}"</div></div>
+                    </div>
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap bg-white/5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors pointer-events-none">Open Log</div>
+                </motion.button>
+            )}
+
+            {isLoading ? ( <div className="flex flex-col items-center gap-4 animate-pulse"><RefreshCw className="w-8 h-8 animate-spin text-zinc-500" /><span className="text-xs text-zinc-500 tracking-[0.3em]">SYNCHRONIZING...</span></div> ) : filteredSignals.length > 0 ? (
+                viewMode === 'stack' ? (
+                    <div className="relative w-full max-w-2xl h-[55vh] md:h-[550px] flex items-center justify-center perspective-1000 mt-4">
+                        {filteredSignals.map((signal, index) => (
+                           <SignalCard 
+                              key={signal.id}
+                              signal={signal}
+                              style={getCardStyle(index)}
+                              user={user}
+                              onDragEnd={handleDragEnd}
+                              onExpand={() => { if(index === currentIndex) setIsExpanded(true); }}
+                              onLike={handleSendSignal}
+                              onTranslate={handleTranslate}
+                              isTranslated={translatedIDs[signal.id]}
+                              isGlobalEnglish={isGlobalEnglish}
+                           />
+                        ))}
+                        <div className="absolute bottom-0 flex items-center gap-6 md:gap-12 z-30 translate-y-1/2">
+                            <button onClick={prevSignal} className="p-3 md:p-4 rounded-full bg-black/20 border border-white/5 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
+                            <button onClick={() => setIsWriting(true)} className="group relative"><div className="absolute inset-0 bg-white blur-xl opacity-20 rounded-full group-hover:opacity-40 transition-opacity" /><div className="relative w-16 h-16 md:w-24 md:h-24 bg-white text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"><Podcast className="w-8 h-8 md:w-10 md:h-10 animate-pulse" /></div></button>
+                            <button onClick={nextSignal} className="p-3 md:p-4 rounded-full bg-black/20 border border-white/5 text-zinc-500 hover:text-white transition-all backdrop-blur-md"><ChevronRight className="w-6 h-6 md:w-8 md:h-8" /></button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="w-full h-[75vh] md:h-[65vh] overflow-y-auto overflow-x-hidden px-2 custom-scrollbar">
+                        <div className="grid gap-3 pb-20"> 
+                            {filteredSignals.map((signal, index) => (
+                                <motion.div key={signal.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-start gap-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl hover:bg-white/[0.07] transition-all group cursor-pointer`} onClick={() => { setCurrentIndex(index); setIsExpanded(true); }}>
+                                    <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0 mt-1"><img src={signal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${signal.author}`} className="w-full h-full object-cover" /></div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="text-xs font-bold text-zinc-300 truncate hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); router.push(`/profile/${signal.author}`); }}>@{signal.author}</span>
+                                            <span className="text-[10px] font-mono text-zinc-600">{new Date(signal.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                        </div>
+                                        <p className="text-sm text-zinc-300 leading-relaxed line-clamp-4 break-words">"{renderText(signal)}"</p>
+                                        <div className="flex gap-4 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all text-[10px] font-bold text-zinc-500 uppercase">
+                                            <span className={getFrequencyColor(signal.frequency)}>{signal.frequency}</span>
+                                            <div className="flex items-center gap-1"><Radio className="w-3 h-3 text-blue-500" /> {signal.likes?.length || 0}</div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            ) : <div className="text-center opacity-50"><h2 className="text-xl font-serif">Static... The void is silent.</h2><button onClick={() => setIsWriting(true)} className="mt-4 text-blue-400 hover:text-blue-300 underline underline-offset-4 font-bold">Be the first to transmit.</button></div>}
+        </div>
+
+        <div className="hidden lg:flex flex-col w-72 h-[calc(100vh-8rem)] fixed right-8 top-32 z-40">
+            <div className="w-full h-full bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl p-4 flex flex-col overflow-hidden relative">
+                <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest"><Briefcase className="w-3 h-3 text-emerald-400" /> Mission Board</div>
+                    <div className="flex gap-1">
+                        <button onClick={() => setMissionViewMode('list')} className={`p-1 rounded-md transition-all ${missionViewMode === 'list' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><List className="w-3 h-3" /></button>
+                        <button onClick={() => setMissionViewMode('cards')} className={`p-1 rounded-md transition-all ${missionViewMode === 'cards' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}><Grid className="w-3 h-3" /></button>
+                        <button 
+  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMissionModalOpen(true); }} 
+  className="relative z-[60] p-1.5 bg-white text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg"
+>
+  <Plus className="w-3.5 h-3.5" />
+</button>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                    {missions.length > 0 ? missions.map((mission) => (
+                        <div key={mission.id} className={`bg-white/[0.03] border border-white/10 p-3 rounded-xl hover:border-white/30 transition-all cursor-pointer group ${missionViewMode === 'list' ? 'flex items-center justify-between py-2' : ''}`} onClick={() => setSelectedMission(mission)}>
+                            {missionViewMode === 'cards' ? (
+                                <>
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                                        <span className="text-[8px] text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <h4 className="text-xs font-bold text-white leading-tight mb-1 truncate">{mission.title}</h4>
+                                    <p className="text-[10px] text-zinc-500 line-clamp-2 leading-snug">{mission.description}</p>
+                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between items-center">
+                                        <span className="text-[9px] font-mono text-emerald-400">{mission.budget}</span>
+                                        <button className="text-[9px] text-zinc-400 hover:text-white transition-colors">Details</button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col min-w-0 pr-2">
+                                        <h4 className="text-xs font-bold text-white truncate">{mission.title}</h4>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className={`text-[8px] font-bold ${mission.type === 'paid' ? 'text-emerald-400' : 'text-blue-400'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                                            <span className="text-[8px] text-zinc-600">• {new Date(mission.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="w-3 h-3 text-zinc-600 group-hover:text-white transition-colors" />
+                                </>
+                            )}
+                        </div>
+                    )) : <div className="text-center text-zinc-700 text-[10px] mt-10">No missions active.<br/>Be the first to hire.</div>}
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+            </div>
+        </div>
+      </main>
+
+      {viewMode === 'log' && (
+        <button onClick={() => setIsWriting(true)} className="fixed bottom-10 right-8 lg:right-auto lg:left-1/2 lg:-translate-x-1/2 z-50 w-14 h-14 md:w-16 md:h-16 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all">
+            <Podcast className="w-6 h-6 md:w-8 md:h-8 animate-pulse" />
+        </button>
+      )}
 
       <AnimatePresence>
-        {/* WRITE MODAL (Güncellenmiş Stil) */}
-        {isWriting && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0f0f25] border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-white">Broadcast Signal</h3>
-                        <button onClick={() => setIsWriting(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+        <WriteModal 
+           isOpen={isWriting} 
+           onClose={() => setIsWriting(false)} 
+           messageText={messageText}
+           setMessageText={setMessageText}
+           onBroadcast={handleBroadcast}
+           isSending={isSending}
+           selectedFreq={selectedFreq}
+           setSelectedFreq={setSelectedFreq}
+        />
+        
+        {/* MISSION EKLEME MODALI */}
+        {isMissionModalOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMissionModalOpen(false)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission</h2>
+                        <p className="text-xs text-zinc-400 mt-1">Recruit fellow travelers for your project.</p>
                     </div>
-                    
-                    <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
-                        {FREQUENCIES.map(freq => (
-                            <button key={freq.id} onClick={() => setSelectedFreq(freq)} className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${selectedFreq.id === freq.id ? getFrequencyStyle(freq.id) : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}>
-                                {freq.name}
-                            </button>
-                        ))}
+                    <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Title</label><input value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        <div className="flex gap-4">
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Type</label><div className="flex flex-col gap-2"><button onClick={() => setNewMission({...newMission, type: 'partner'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'partner' ? 'bg-blue-500 text-white border-blue-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Co-Founder</button><button onClick={() => setNewMission({...newMission, type: 'paid'})} className={`p-2 rounded-lg text-xs font-bold border transition-all ${newMission.type === 'paid' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10'}`}>Paid Gig</button></div></div>
+                            <div className="flex-1"><label className="text-xs text-zinc-500 uppercase font-bold">Budget/Equity</label><input value={newMission.budget} onChange={e => setNewMission({...newMission, budget: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" /></div>
+                        </div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold">Details</label><textarea value={newMission.description} onChange={e => setNewMission({...newMission, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none h-24 resize-none focus:border-emerald-500/50" /></div>
+                        <div><label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Contact Methods</label><div className="space-y-2"><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-emerald-500/50 transition-colors"><AtSign className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_email} onChange={e => setNewMission({...newMission, contact_email: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Email (Required)" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-blue-500/50 transition-colors"><Video className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_skype} onChange={e => setNewMission({...newMission, contact_skype: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Skype ID" /></div><div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3 focus-within:border-pink-500/50 transition-colors"><Instagram className="w-4 h-4 text-zinc-500" /><input value={newMission.contact_insta} onChange={e => setNewMission({...newMission, contact_insta: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram User" /></div></div></div>
                     </div>
-                    
-                    <textarea value={messageText} onChange={e => setMessageText(e.target.value)} placeholder="What message do you send to the void?" className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-slate-500 resize-none outline-none focus:border-indigo-500/50 transition-all mb-6" />
-                    
-                    <button onClick={handleBroadcast} disabled={isSending || !messageText.trim()} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:hover:bg-indigo-600 shadow-lg shadow-indigo-500/20">
-                        {isSending ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Send className="w-5 h-5" /> Transmit Signal</>}
-                    </button>
+                    <div className="p-6 border-t border-white/10 bg-black/40"><button onClick={handleCreateMission} disabled={isPostingMission || !newMission.title || !newMission.contact_email} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50">{isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5 text-yellow-600" /> Post Mission (Free)</>}</button></div>
                 </motion.div>
             </motion.div>
         )}
         
-        {/* MISSION MODALS (Aynı mantık, yeni stil) */}
-        {isMissionModalOpen && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-[#0f0f25] border border-white/10 rounded-3xl p-6 space-y-5 relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                    <div className="flex justify-between items-center"><h3 className="font-bold text-xl text-white">New Mission Brief</h3><button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5" /></button></div>
-                    <input placeholder="Mission Title" value={newMission.title} onChange={e => setNewMission({...newMission, title: e.target.value})} className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" />
-                    <div className="flex gap-3"><select className="bg-white/5 p-4 rounded-xl flex-1 border border-white/10 outline-none text-white appearance-none focus:border-amber-500/50 transition-all" onChange={e => setNewMission({...newMission, type: e.target.value as any})}><option value="partner" className="bg-[#0f0f25]">Partner</option><option value="paid" className="bg-[#0f0f25]">Paid</option></select><input placeholder="Budget / Equity" className="bg-white/5 p-4 rounded-xl flex-1 border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, budget: e.target.value})} /></div>
-                    <textarea placeholder="Mission Description..." className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none h-32 resize-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, description: e.target.value})} />
-                    <input placeholder="Contact Email (Secure)" className="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-amber-500/50 text-white transition-all" onChange={e => setNewMission({...newMission, contact_email: e.target.value})} />
-                    <button onClick={handleCreateMission} disabled={isPostingMission} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:scale-[1.02] transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50">{isPostingMission ? "Publishing..." : "Publish Mission"}</button>
-                </div>
-            </motion.div>
-        )}
-
-        {selectedMission && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setSelectedMission(null)}>
-                <div className="w-full max-w-lg bg-[#0f0f25] border border-white/10 rounded-3xl p-8 relative shadow-2xl" onClick={e => e.stopPropagation()}>
-                    <button className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedMission(null)}><X className="w-5 h-5" /></button>
-                    <span className={`text-xs font-bold uppercase tracking-widest mb-3 block ${selectedMission.type === 'paid' ? 'text-emerald-400' : 'text-blue-400'}`}>{selectedMission.type === 'paid' ? 'PAID OPPORTUNITY' : 'PARTNER REQUEST'}</span>
-                    <h2 className="text-2xl font-bold mb-2 text-white">{selectedMission.title}</h2>
-                    <div className="text-amber-400 font-medium mb-6">{selectedMission.budget}</div>
-                    <p className="text-slate-300 leading-relaxed mb-8 whitespace-pre-wrap">{selectedMission.description}</p>
-                    <div className="bg-white/5 p-5 rounded-2xl border border-white/10">
-                        <div className="text-xs text-slate-500 font-bold uppercase mb-2">Contact Secure Link</div>
-                        <div className="text-white font-mono text-sm select-all">{selectedMission.contact_info}</div>
+        {isMissionListOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={() => setIsMissionListOpen(false)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-sm h-[70vh] bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => setIsMissionListOpen(false)} className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/20"><X className="w-5 h-5 text-white" /></button>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Mission Board</h2>
                     </div>
-                </div>
-            </motion.div>
-        )}
-
-        {/* SIGNAL DETAIL MODAL (Yeni Stil) */}
-        {selectedSignal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setSelectedSignal(null)}>
-                <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-2xl bg-[#0f0f25] border border-white/10 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                        <div className="flex items-center gap-4">
-                             <img src={selectedSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedSignal.author}`} className="w-12 h-12 rounded-full border-2 border-white/10" />
-                             <div>
-                                 <div className="font-bold text-white text-lg">@{selectedSignal.author}</div>
-                                 <div className={`text-xs font-bold uppercase tracking-wider ${getFrequencyStyle(selectedSignal.frequency).split(' ')[1]}`}>{selectedSignal.frequency} Sector</div>
-                             </div>
-                        </div>
-                        <button onClick={() => setSelectedSignal(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                        <p className="text-xl leading-relaxed text-white mb-10 whitespace-pre-wrap font-serif pl-4 border-l-4 border-indigo-500/50">"{renderText(selectedSignal)}"</p>
-                        
-                        <div className="border-t border-white/10 pt-8">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Signal Logs ({selectedSignal.comments?.length || 0})</h4>
-                            <div className="space-y-6">
-                                {selectedSignal.comments?.map(c => (
-                                    <div key={c.id} className="flex gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-slate-300 shrink-0">{c.author?.[0]}</div>
-                                        <div>
-                                            <div className="text-sm font-bold text-white mb-1">@{c.author} <span className="text-slate-500 text-xs font-normal ml-2">{new Date(c.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
-                                            <p className="text-slate-300 leading-relaxed">{c.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+                        {missions.length > 0 ? missions.map((mission) => (
+                            <div key={mission.id} className="bg-white/5 border border-white/10 p-4 rounded-xl" onClick={() => { setIsMissionListOpen(false); setSelectedMission(mission); }}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${mission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{mission.type === 'paid' ? 'PAID' : 'PARTNER'}</span>
+                                    <span className="text-[9px] text-zinc-600">{new Date(mission.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <h4 className="text-sm font-bold text-white leading-tight mb-2">{mission.title}</h4>
+                                <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{mission.description}</p>
+                                <div className="pt-3 border-t border-white/5 flex justify-between items-center">
+                                    <span className="text-xs font-mono text-emerald-400">{mission.budget}</span>
+                                    <button className="text-xs text-black bg-white px-3 py-1.5 rounded-lg font-bold">Details</button>
+                                </div>
                             </div>
-                        </div>
+                        )) : <div className="text-center text-zinc-500 text-xs mt-10">No missions active.</div>}
                     </div>
-                    <div className="p-4 border-t border-white/10 bg-white/5 flex gap-3">
-                        <input value={commentText} onChange={e => setCommentText(e.target.value)} className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 outline-none text-sm text-white focus:border-indigo-500/50 transition-all placeholder:text-slate-500" placeholder="Reply to signal..." onKeyDown={e => e.key === 'Enter' && handlePostComment(selectedSignal.id)} />
-                        <button onClick={() => handlePostComment(selectedSignal.id)} className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition-all shadow-lg shadow-indigo-500/20"><Send className="w-5 h-5" /></button>
+                    <div className="p-4 border-t border-white/10">
+                        <button onClick={() => { setIsMissionListOpen(false); setIsMissionModalOpen(true); }} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> Post a Mission</button>
                     </div>
                 </motion.div>
             </motion.div>
         )}
 
-        {/* DAILY QUESTION MODAL (Yeni Stil) */}
-         {isDailyOpen && dailyQuestion && (
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={() => setIsDailyOpen(false)}>
-                <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-4xl max-h-[90vh] bg-[#0f0f25] border border-amber-500/30 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative" onClick={(e) => e.stopPropagation()}>
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                    <div className="p-8 border-b border-white/5 bg-amber-900/10 shrink-0 relative">
+        {selectedMission && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedMission(null)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-lg bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-start shrink-0">
+                        <div className="pr-4">
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest border ${selectedMission.type === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{selectedMission.type === 'paid' ? 'Paid Project' : 'Co-Founder Needed'}</span>
+                            <h2 className="text-xl font-bold text-white mt-3 leading-tight break-words break-all">{selectedMission.title}</h2>
+                        </div>
+                        <button onClick={() => setSelectedMission(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 shrink-0"><X className="w-5 h-5 text-white" /></button>
+                    </div>
+                    <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                        <div className="group cursor-pointer p-3 -m-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5" onClick={() => setExpandedBrief(selectedMission.description)}>
+                            <div className="text-[10px] text-zinc-500 uppercase font-bold mb-2 flex items-center gap-2">
+                                <Briefcase className="w-3 h-3" /> Mission Brief <span className="text-[9px] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto flex items-center gap-1"><Maximize2 className="w-3 h-3" /> Expand</span>
+                            </div>
+                            <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap line-clamp-4 break-words break-all">{selectedMission.description}</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1 flex items-center gap-2"><DollarSign className="w-3 h-3 text-emerald-400" /> Budget</div>
+                                <div className="text-sm font-mono text-white truncate">{selectedMission.budget}</div>
+                            </div>
+                            <div className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5">
+                                <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1 flex items-center gap-2"><Calendar className="w-3 h-3 text-blue-500" /> Posted</div>
+                                <div className="text-sm font-mono text-white">{new Date(selectedMission.created_at).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl">
+                            <div className="text-[10px] text-emerald-400 uppercase font-bold mb-3 flex items-center gap-2"><Mail className="w-3 h-3" /> Contact Channels</div>
+                            {renderContactInfo(selectedMission.contact_info)}
+                        </div>
+                    </div>
+                    <div className="p-4 bg-white/5 border-t border-white/10 text-center shrink-0">
+                        <p className="text-[10px] text-zinc-600">Good luck on your mission, traveler.</p>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+
+        {expandedBrief && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" onClick={() => setExpandedBrief(null)}>
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full max-w-3xl bg-[#0a0a0a] border border-emerald-500/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-emerald-400" /> Full Mission Brief</h3>
+                        <button onClick={() => setExpandedBrief(null)} className="p-2 bg-white/5 rounded-full hover:bg-white/10"><X className="w-5 h-5 text-white" /></button>
+                    </div>
+                    <div className="p-8 overflow-y-auto custom-scrollbar">
+                        <p className="text-base text-zinc-300 leading-loose whitespace-pre-wrap font-serif break-words break-all">{expandedBrief}</p>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+
+        {isDailyOpen && dailyQuestion && (
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsDailyOpen(false)}>
+                <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-4xl max-h-[90vh] bg-[#0a0a0a] border border-blue-500/30 rounded-3xl shadow-[0_0_50px_-10px_rgba(59,130,246,0.2)] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-8 border-b border-white/5 bg-blue-900/10 shrink-0">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2"><Star className="w-4 h-4 fill-current animate-pulse" /> Daily Reflection Topic</div>
-                            <button onClick={() => setIsDailyOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-6 h-6 text-white" /></button>
+                            <div className="text-xs font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-4 h-4" /> Topic of the Day</div>
+                            <button onClick={() => setIsDailyOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X className="w-6 h-6" /></button>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight italic text-center py-4">"{dailyQuestion.content}"</h2>
+                        <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight">"{dailyQuestion.content}"</h2>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-black/20">
+                    <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                         <div className="space-y-4">
-                            {dailyResponses.length > 0 ? dailyResponses.map((response) => (
-                                <div key={response.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+                            {dailyResponses.length > 0 ? dailyResponses.map((response) => {
+                                const isTranslated = translatedIDs[response.id];
+                                return (
+                                <div key={response.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 hover:bg-white/[0.05] transition-all">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-8 h-8 rounded-full border border-white/10" />
-                                        <div className="text-sm font-bold text-white">@{response.author}</div>
+                                        <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden border border-white/10"><img src={response.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${response.author}`} className="w-full h-full object-cover" /></div>
+                                        <div><div className="text-sm font-bold text-white cursor-pointer hover:text-blue-400 transition-colors" onClick={() => { setIsDailyOpen(false); router.push(`/profile/${response.author}`); }}>@{response.author}</div><div className="text-[10px] text-zinc-500">{new Date(response.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div></div>
+                                        <button onClick={(e) => handleTranslate(e, response)} className={`ml-auto p-1.5 rounded-full border transition-all ${isTranslated ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}><Globe className="w-3 h-3" /></button>
                                     </div>
-                                    <p className="text-slate-200 text-base leading-relaxed font-serif pl-11 border-l-2 border-amber-500/30">"{renderText(response)}"</p>
+                                    <p className="text-zinc-200 leading-relaxed text-lg font-serif">"{renderText(response)}"</p>
+                                    <div className="mt-4 flex gap-4 text-xs text-zinc-500 font-bold uppercase tracking-widest">
+                                        <button onClick={(e) => handleSendSignal(e, response.id)} className="flex items-center gap-2 hover:text-white"><Radio className={`w-4 h-4 ${response.likes?.some((l:any) => l.user_id === user?.id) ? 'text-blue-500' : ''}`} /> {response.likes?.length || 0} Echoes</button>
+                                    </div>
                                 </div>
-                            )) : <div className="text-center py-20 opacity-50 text-sm uppercase tracking-widest">No reflections yet. Be the first light.</div>}
+                            ); }) : <div className="text-center py-20 opacity-40"><MessageSquare className="w-12 h-12 mx-auto mb-4" /><p>No transmissions.</p></div>}
                         </div>
                     </div>
-                    <div className="p-6 bg-white/5 border-t border-white/5 shrink-0 flex gap-3">
-                         <input type="text" value={dailyResponseText} onChange={(e) => setDailyResponseText(e.target.value)} placeholder="Share your reflection..." className="flex-1 bg-white/5 border border-white/10 rounded-full px-6 py-4 text-sm text-white outline-none focus:border-amber-500/50 transition-all" onKeyDown={(e) => e.key === 'Enter' && handleDailyResponse()} />
-                         <button onClick={handleDailyResponse} disabled={isSending || !dailyResponseText.trim()} className="px-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-full hover:scale-105 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:hover:scale-100"><Send className="w-5 h-5" /></button>
+                    <div className="p-6 bg-black/40 border-t border-white/5 shrink-0 flex gap-4">
+                         <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0"><User className="w-5 h-5 text-zinc-500" /></div>
+                         <div className="flex-1 relative">
+                            <input type="text" value={dailyResponseText} onChange={(e) => setDailyResponseText(e.target.value)} placeholder="Transmit..." className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white outline-none" onKeyDown={(e) => e.key === 'Enter' && handleDailyResponse()} />
+                            <button onClick={handleDailyResponse} disabled={isSending || !dailyResponseText.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-black rounded-full hover:scale-105 transition-all"><CornerDownRight className="w-4 h-4" /></button>
+                         </div>
                     </div>
                 </motion.div>
              </motion.div>
         )}
 
+        {/* GENİŞLETİLMİŞ SİNYAL MODALI (DETAY VE YORUMLAR) */}
+        {isExpanded && !isWriting && currentSignal && (
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" 
+                onClick={() => setIsExpanded(false)}
+            >
+                
+                {/* MASAÜSTÜ SOL OK */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); prevSignal(); }}
+                    className="hidden md:flex fixed left-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                >
+                    <ChevronLeft className="w-8 h-8" />
+                </button>
+
+                {/* MODAL GÖVDESİ */}
+                <motion.div 
+                    initial={{ scale: 0.9, y: 50 }} 
+                    animate={{ scale: 1, y: 0 }} 
+                    /* MOBİL SWIPE (PARMAK KAYDIRMA) ÖZELLİĞİ */
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.4}
+                    onDragEnd={(e, info) => {
+                        if (info.offset.x < -100) nextSignal();
+                        else if (info.offset.x > 100) prevSignal();
+                    }}
+                    className={`relative w-full max-w-3xl max-h-[85vh] bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col touch-none`} 
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    
+                    {/* MODAL HEADER */}
+                    <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02] shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5">
+                                <img src={currentSignal.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentSignal.author}`} className="w-full h-full object-cover" alt="Author" />
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-white text-sm md:text-base">{currentSignal.author}</h2>
+                                <p className="text-[10px] text-zinc-500 uppercase">{currentSignal.frequency}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={(e) => handleTranslate(e, currentSignal)} className={`p-2 rounded-full border transition-all ${translatedIDs[currentSignal.id] ? 'bg-white text-black border-white' : 'bg-transparent text-zinc-500 border-white/10 hover:text-white'}`}>
+                                <Globe className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setIsExpanded(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* İÇERİK ALANI */}
+                    <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                        <p className="text-lg md:text-2xl font-serif text-zinc-200 leading-relaxed whitespace-pre-wrap mb-10 mt-4 italic">
+                            "{renderText(currentSignal)}"
+                        </p>
+
+                        <div className="pt-8 border-t border-white/5">
+                            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6">Log Entries ({currentSignal.comments?.length || 0})</h3>
+                            <div className="space-y-6">
+                                {(showAllComments ? currentSignal.comments : currentSignal.comments?.slice(0, 2))?.map((comment: any) => (
+                                    <div key={comment.id} className="flex gap-4 group">
+                                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center shrink-0">
+                                            <User className="w-4 h-4 text-zinc-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-sm font-bold text-zinc-300">{comment.author}</span>
+                                                <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleTimeString()}</span>
+                                            </div>
+                                            <p className="text-sm text-zinc-400 leading-relaxed">{comment.content}</p>
+                                            <button onClick={() => initiateReply(comment.author)} className="text-[10px] text-zinc-600 hover:text-white mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <Reply className="w-3 h-3" /> Reply
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {!showAllComments && currentSignal.comments && currentSignal.comments.length > 2 && (
+                                    <button onClick={() => setShowAllComments(true)} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2 pl-12">
+                                        <span>Expand {currentSignal.comments.length - 2} more logs</span>
+                                        <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* YORUM YAZMA ALANI */}
+                    <div className="p-4 md:p-6 bg-black/40 border-t border-white/5 shrink-0">
+                        {replyingTo && (
+                            <div className="flex items-center justify-between mb-2 px-12 text-xs text-blue-400">
+                                <span>Replying to <span className="font-bold">@{replyingTo}</span></span>
+                                <button onClick={() => setReplyingTo(null)} className="hover:text-white"><X className="w-3 h-3" /></button>
+                            </div>
+                        )}
+                        <div className="flex gap-3 items-center">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 md:w-5 md:h-5 text-zinc-500" />
+                            </div>
+                            <div className="flex-1 relative">
+                                <input 
+                                    ref={inputRef} 
+                                    type="text" 
+                                    value={commentText} 
+                                    onChange={(e) => setCommentText(e.target.value)} 
+                                    placeholder="Transmit a reply..." 
+                                    className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 md:py-3 px-5 text-sm text-white outline-none focus:border-white/30 pr-12" 
+                                    onKeyDown={(e) => e.key === 'Enter' && handlePostComment(currentSignal.id)} 
+                                />
+                                <button 
+                                    onClick={() => handlePostComment(currentSignal.id)} 
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:scale-105 transition-all"
+                                >
+                                    <CornerDownRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* MASAÜSTÜ SAĞ OK */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); nextSignal(); }}
+                    className="hidden md:flex fixed right-10 z-[110] p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+                >
+                    <ChevronRight className="w-8 h-8" />
+                </button>
+
+                {/* MOBİL İÇİN SABİT ALT NAVİGASYON (Parmak hizası) */}
+                <div className="md:hidden fixed bottom-10 left-0 right-0 flex justify-between px-10 z-[120] pointer-events-none">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); prevSignal(); }}
+                        className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); nextSignal(); }}
+                        className="p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white pointer-events-auto active:scale-90 transition-all"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
+                </div>
+
+            </motion.div>
+        )}
+        {/* MISSION EKLEME MODALI */}
+{isMissionModalOpen && (
+    <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" 
+        onClick={() => setIsMissionModalOpen(false)}
+    >
+        <motion.div 
+            initial={{ scale: 0.9, y: 50 }} 
+            animate={{ scale: 1, y: 0 }} 
+            className="w-full max-w-md bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_-10px_rgba(52,211,153,0.2)]" 
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="p-6 border-b border-white/10 bg-emerald-900/10 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-emerald-400" /> Post a Mission
+                </h2>
+                <button onClick={() => setIsMissionModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full">
+                    <X className="w-5 h-5 text-white" />
+                </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Title</label>
+                    <input 
+                        value={newMission.title} 
+                        onChange={e => setNewMission({...newMission, title: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none focus:border-emerald-500/50" 
+                        placeholder="Project title..."
+                    />
+                </div>
+                <div className="flex gap-4">
+                    <div className="flex-1">
+                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Type</label>
+                        <select 
+                            value={newMission.type} 
+                            onChange={e => setNewMission({...newMission, type: e.target.value as any})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none"
+                        >
+                            <option value="partner" className="bg-black">Co-Founder</option>
+                            <option value="paid" className="bg-black">Paid Gig</option>
+                        </select>
+                    </div>
+                    <div className="flex-1">
+                        <label className="text-[10px] text-zinc-500 uppercase font-bold">Budget</label>
+                        <input 
+                            value={newMission.budget} 
+                            onChange={e => setNewMission({...newMission, budget: e.target.value})} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
+                            placeholder="e.g. $500 or %10"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Mission Details</label>
+                    <textarea 
+                        value={newMission.description} 
+                        onChange={e => setNewMission({...newMission, description: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 h-24 resize-none outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="text-[10px] text-zinc-500 uppercase font-bold">Contact Email</label>
+                    <input 
+                        value={newMission.contact_email} 
+                        onChange={e => setNewMission({...newMission, contact_email: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white mt-1 outline-none" 
+                    />
+                </div>
+            </div>
+
+            <div className="p-6 border-t border-white/10 bg-black/40">
+                <button 
+                    onClick={handleCreateMission} 
+                    disabled={isPostingMission || !newMission.title || !newMission.contact_email}
+                    className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                >
+                    {isPostingMission ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Post Mission (Free)"}
+                </button>
+            </div>
+        </motion.div>
+    </motion.div>
+)}
       </AnimatePresence>
     </div>
   );
